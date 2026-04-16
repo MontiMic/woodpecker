@@ -45,6 +45,7 @@ export default function SharedRoom() {
                 setPuzzleData(puzzleData);
                 setSolution(puzzleData.solution);
                 setDirection(puzzleData.direction);
+                setIsFlipped(puzzleData.direction === 'b');
             } catch (error) {
                 setError('Failed to load puzzle');
                 console.error('Error loading puzzle:', error);

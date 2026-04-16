@@ -142,6 +142,7 @@ export default function Board() {
       setDescription(newPuzzleData.description);
       setBoard(new Map([...newPuzzleData.boardFromFen, ...SIDE_CELLS_MAP]));
       setDirection(newPuzzleData.direction);
+      setIsFlipped(newPuzzleData.direction === 'b');
       setSolution(newPuzzleData.solution);
       setSelectedCell(null);
       setIsSolutionRevealed(false);
@@ -167,6 +168,7 @@ export default function Board() {
       setDescription(newPuzzleData.description);
       setBoard(new Map([...newPuzzleData.boardFromFen, ...SIDE_CELLS_MAP]));
       setDirection(newPuzzleData.direction);
+      setIsFlipped(newPuzzleData.direction === 'b');
       setSolution(newPuzzleData.solution);
       setSelectedCell(null);
       setIsSolutionRevealed(false);
