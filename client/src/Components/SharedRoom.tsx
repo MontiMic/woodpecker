@@ -15,6 +15,8 @@ export default function SharedRoom() {
     const [searchParams] = useSearchParams();
     const puzzleId = parseInt(searchParams.get('puzzleId') || '1');
     const navigate = useNavigate();
+    const [isFlipped, setIsFlipped] = useState<boolean>(false);
+
     
     const [socket, setSocket] = useState<Socket | null>(null);
     const [board, setBoard] = useState<BoardState>(new Map([...SIDE_CELLS_MAP]));
@@ -320,6 +322,17 @@ export default function SharedRoom() {
                     >
                         Share Room
                     </button>
+                    <button 
+                        onClick={() => setIsFlipped(!isFlipped)}
+                        className="px-6 py-3 text-black font-bold rounded-xl transition-all duration-200 
+                                    shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 active:shadow-md
+                                    border-b-4 border-gray-700 hover:border-gray-800 w-full
+                                    hover:brightness-110 active:brightness-95 relative z-10"
+                        style={{ backgroundColor: 'var(--black-cell-color)' }}
+                        title="Flip the board orientation"
+                        >
+                        Flip Board
+                        </button>
                 </div>
                 
                 {/* Board */}
@@ -330,6 +343,7 @@ export default function SharedRoom() {
                         onCellClick={onSelectedCell}
                         isLoading={isLoading}
                         loadingMessage="Loading puzzle..."
+                        flipped={isFlipped}
                     />
                 </div>
             </div>

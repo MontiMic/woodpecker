@@ -320,6 +320,9 @@ export default function Board() {
           <ControlButton onClick={sharePuzzle} title="Create a shared room for this puzzle">
             Share Puzzle
           </ControlButton>
+          <ControlButton onClick={() => setIsFlipped(!isFlipped)} title="Flip the board orientation">
+            Flip Board
+          </ControlButton>
         </div>
         
         <div className="order-1 xl:order-2 relative">
@@ -329,6 +332,7 @@ export default function Board() {
             onCellClick={onSelectedCell}
             isLoading={isLoadingNewPuzzle}
             loadingMessage="Loading puzzle..."
+            flipped={isFlipped}
           />
         </div>
       </div>

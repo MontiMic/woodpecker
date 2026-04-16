@@ -11,6 +11,7 @@ interface ChessBoardProps {
   onCellClick: (cell: DeskCell) => void;
   isLoading?: boolean;
   loadingMessage?: string;
+  flipped?: boolean;
 }
 
 export default function ChessBoard({ 
@@ -18,7 +19,8 @@ export default function ChessBoard({
   selectedCell, 
   onCellClick, 
   isLoading = false,
-  loadingMessage = "Loading puzzle..."
+  loadingMessage = "Loading puzzle...",
+  flipped = false
 }: ChessBoardProps) {
   const gridElement = useRef<HTMLDivElement>(null);
 
@@ -50,39 +52,94 @@ export default function ChessBoard({
     }
   }, []);
 
+  // Helper to get the visual grid cell when flipped
+  const getVisualCell = (cell: DeskCell): DeskCell => {
+    if (!flipped) return cell;
+    
+    // Board cells: map A1->H8, B2->G7, etc.
+    if (cell.match(/^[A-H][1-8]$/)) {
+      const col = cell.charCodeAt(0) - 64; // A=1, B=2, ...
+      const row = parseInt(cell[1]);
+      const newCol = String.fromCharCode(65 + (8 - col)); // 9 - col
+      const newRow = 9 - row;
+      return `${newCol}${newRow}` as DeskCell;
+    }
+    // Side cells: swap 'w' and 'b' prefixes
+    if (cell.startsWith('w')) return cell.replace('w', 'b') as DeskCell;
+    if (cell.startsWith('b')) return cell.replace('b', 'w') as DeskCell;
+    return cell;
+  };
+
+  // Reversed column labels when flipped
+  const getColumnLabel = (col: string): string => {
+    if (!flipped) return col.toLowerCase();
+    const idx = COLUMNS.indexOf(col as any);
+    return COLUMNS[7 - idx].toLowerCase();
+  };
+
+  // Reversed row labels when flipped
+  const getRowLabel = (row: string): string => {
+    if (!flipped) return row;
+    return (9 - parseInt(row)).toString();
+  };
+
   return (
     <div className={`relative transition-opacity duration-300 ${isLoading ? 'opacity-70' : 'opacity-100'}`}>
       <div ref={gridElement} className="desk-grid-area w-[min(100vh,100vw)] p-3">
         <div className="board-subgrid checkered-background rounded-lg shadow-2xl">
-          {BOARD_CELLS.map(cell => (
-            <Square key={cell} name={cell} onClick={() => onCellClick(cell)} isSelected={selectedCell == cell}>
-              <Piece piece={board.get(cell)} />
-            </Square>
-          ))}
+          {BOARD_CELLS.map(cell => {
+            const visualCell = getVisualCell(cell);
+            return (
+              <Square 
+                key={cell} 
+                name={visualCell} 
+                onClick={() => onCellClick(cell)} 
+                isSelected={selectedCell == cell}
+              >
+                <Piece piece={board.get(cell)} />
+              </Square>
+            );
+          })}
         </div>
         <div className="white-side-subgrid bg-black-cell rounded-lg shadow-lg">
-          {WHITE_SIDE_CELLS.map(cell => (
-            <Square key={cell} name={cell} onClick={() => onCellClick(cell)} isSelected={selectedCell == cell}>
-              <Piece piece={board.get(cell)} />
-            </Square>
-          ))}
+          {WHITE_SIDE_CELLS.map(cell => {
+            const visualCell = getVisualCell(cell);
+            return (
+              <Square 
+                key={cell} 
+                name={visualCell} 
+                onClick={() => onCellClick(cell)} 
+                isSelected={selectedCell == cell}
+              >
+                <Piece piece={board.get(cell)} />
+              </Square>
+            );
+          })}
         </div>
         <div className="black-side-subgrid bg-white-cell rounded-lg shadow-lg">
-          {BLACK_SIDE_CELLS.map(cell => (
-            <Square key={cell} name={cell} onClick={() => onCellClick(cell)} isSelected={selectedCell == cell}>
-              <Piece piece={board.get(cell)} />
-            </Square>
-          ))}
+          {BLACK_SIDE_CELLS.map(cell => {
+            const visualCell = getVisualCell(cell);
+            return (
+              <Square 
+                key={cell} 
+                name={visualCell} 
+                onClick={() => onCellClick(cell)} 
+                isSelected={selectedCell == cell}
+              >
+                <Piece piece={board.get(cell)} />
+              </Square>
+            );
+          })}
         </div>
         <div className="contents">
           {COLUMNS.map(c => (
             <div key={c} style={{ gridArea: `r${c}` }} className="text-neutral-400 place-self-center">
-              {c.toLowerCase()}
+              {getColumnLabel(c)}
             </div>
           ))}
           {ROWS.map(r => (
             <div key={r} style={{ gridArea: `r${r}` }} className="text-neutral-400 place-self-center">
-              {r}
+              {getRowLabel(r)}
             </div>
           ))}
         </div>
