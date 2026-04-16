@@ -2,7 +2,7 @@ import { Difficulty } from "../constants";
 import { fenToBoardMap, getFallbackBoard } from "./boardUtils";
 import { BoardCell, PieceType } from "../../defs";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 console.log('API Base URL:', API_BASE_URL);
 
 const TOKEN_KEY = 'woodpecker_auth_token';
