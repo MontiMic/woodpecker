@@ -56,7 +56,7 @@ export default function ChessBoard({
   const getVisualCell = (cell: DeskCell): DeskCell => {
     if (!flipped) return cell;
     
-    // Board cells: map A1->H8, B2->G7, etc.
+    // Only flip main board cells (A1-H8)
     if (cell.match(/^[A-H][1-8]$/)) {
       const col = cell.charCodeAt(0) - 64; // A=1, B=2, ...
       const row = parseInt(cell[1]);
@@ -64,9 +64,8 @@ export default function ChessBoard({
       const newRow = 9 - row;
       return `${newCol}${newRow}` as DeskCell;
     }
-    // Side cells: swap 'w' and 'b' prefixes
-    if (cell.startsWith('w')) return cell.replace('w', 'b') as DeskCell;
-    if (cell.startsWith('b')) return cell.replace('b', 'w') as DeskCell;
+    
+    // Side cells remain unchanged
     return cell;
   };
 
@@ -102,34 +101,28 @@ export default function ChessBoard({
           })}
         </div>
         <div className="white-side-subgrid bg-black-cell rounded-lg shadow-lg">
-          {WHITE_SIDE_CELLS.map(cell => {
-            const visualCell = getVisualCell(cell);
-            return (
-              <Square 
-                key={cell} 
-                name={visualCell} 
-                onClick={() => onCellClick(cell)} 
-                isSelected={selectedCell == cell}
-              >
-                <Piece piece={board.get(cell)} />
-              </Square>
-            );
-          })}
+          {WHITE_SIDE_CELLS.map(cell => (
+            <Square 
+              key={cell} 
+              name={cell} 
+              onClick={() => onCellClick(cell)} 
+              isSelected={selectedCell == cell}
+            >
+              <Piece piece={board.get(cell)} />
+            </Square>
+          ))}
         </div>
         <div className="black-side-subgrid bg-white-cell rounded-lg shadow-lg">
-          {BLACK_SIDE_CELLS.map(cell => {
-            const visualCell = getVisualCell(cell);
-            return (
-              <Square 
-                key={cell} 
-                name={visualCell} 
-                onClick={() => onCellClick(cell)} 
-                isSelected={selectedCell == cell}
-              >
-                <Piece piece={board.get(cell)} />
-              </Square>
-            );
-          })}
+          {BLACK_SIDE_CELLS.map(cell => (
+            <Square 
+              key={cell} 
+              name={cell} 
+              onClick={() => onCellClick(cell)} 
+              isSelected={selectedCell == cell}
+            >
+              <Piece piece={board.get(cell)} />
+            </Square>
+          ))}
         </div>
         <div className="contents">
           {COLUMNS.map(c => (
