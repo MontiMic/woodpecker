@@ -23,6 +23,7 @@ export default function Board() {
   const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [puzzleData, setPuzzleData] = useState<PuzzleData | null>(null);
+  const [isFlipped, setIsFlipped] = useState<boolean>(false);
   
   const sharePuzzle = () => {
     const roomId = generateRoomId();
