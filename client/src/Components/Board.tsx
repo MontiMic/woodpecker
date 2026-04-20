@@ -138,11 +138,10 @@ export default function Board() {
     const min = range.min;
     const max = range.max;
     
-    if (direction === 'prev') {
-      return puzzleIndex > min ? puzzleIndex - 1 : max;
-    } else {
-      return puzzleIndex < max ? puzzleIndex + 1 : min;
-    }
+    let newId = direction === 'prev' ? puzzleIndex - 1 : puzzleIndex + 1;
+    if (newId < min) newId = min;
+    if (newId > max) newId = max;
+    return newId;
   };
 
   const loadPuzzleById = async (puzzleId: number) => {
@@ -204,10 +203,6 @@ export default function Board() {
       setIsLoadingNewPuzzle(false);
     }
   };
-
-  //async function loadNewPuzzle() {
-  //  await loadRandomPuzzle();
-  //}
 
   async function loadSpecificPuzzle(puzzleId: number) {
     setError(null);
