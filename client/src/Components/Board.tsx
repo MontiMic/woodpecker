@@ -1,3 +1,4 @@
+// Board.tsx
 import { useEffect, useState } from "react";
 import { DeskCell, WHITE_SIDE_CELLS, BLACK_SIDE_CELLS, PieceType } from "../defs";
 import { Difficulty } from "./types";
@@ -13,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import ChessBoard from "./ChessBoard";
 import SolutionBox from "./SolutionBox";
 import { PuzzleData, BoardState } from "./types";
+import { DIFFICULTY_RANGES } from "./constants";
 
 export default function Board() {
   const navigate = useNavigate();
@@ -130,7 +132,55 @@ export default function Board() {
     }
   }
   
-  async function loadNewPuzzle() {
+  //wrapper for getting adjacent puzzles
+  const getAdjacentPuzzleId = (direction: 'prev' | 'next'): number => {
+    const range = DIFFICULTY_RANGES[difficulty];
+    const min = range.min;
+    const max = range.max;
+    
+    if (direction === 'prev') {
+      return puzzleIndex > min ? puzzleIndex - 1 : max;
+    } else {
+      return puzzleIndex < max ? puzzleIndex + 1 : min;
+    }
+  };
+
+  const loadPuzzleById = async (puzzleId: number) => {
+    setError(null);
+    setIsLoadingNewPuzzle(true);
+    
+    try {
+      await savePendingEvaluation();
+      
+      const newPuzzleData = await getPuzzleByIdFromAPI(puzzleId);
+      setPuzzleData(newPuzzleData);
+      setDescription(newPuzzleData.description);
+      setBoard(new Map([...newPuzzleData.boardFromFen, ...SIDE_CELLS_MAP]));
+      setDirection(newPuzzleData.direction);
+      setIsFlipped(newPuzzleData.direction === 'b');
+      setSolution(newPuzzleData.solution);
+      setSelectedCell(null);
+      setIsSolutionRevealed(false);
+      setPuzzleIndex(newPuzzleData.index);
+    } catch (error) {
+      setError('Failed to load puzzle. Please try again.');
+      console.error('Error loading puzzle:', error);
+    } finally {
+      setIsLoadingNewPuzzle(false);
+    }
+  };
+
+  const loadPreviousPuzzle = () => {
+    const newId = getAdjacentPuzzleId('prev');
+    loadPuzzleById(newId);
+  };
+
+  const loadNextPuzzle = () => {
+    const newId = getAdjacentPuzzleId('next');
+    loadPuzzleById(newId);
+  };
+
+  const loadRandomPuzzle = async () => {
     setError(null);
     setIsLoadingNewPuzzle(true);
     
@@ -153,7 +203,11 @@ export default function Board() {
     } finally {
       setIsLoadingNewPuzzle(false);
     }
-  }
+  };
+
+  //async function loadNewPuzzle() {
+  //  await loadRandomPuzzle();
+  //}
 
   async function loadSpecificPuzzle(puzzleId: number) {
     setError(null);
@@ -252,7 +306,7 @@ export default function Board() {
       <div className="flex flex-col items-center justify-center min-h-screen bg-black-background p-4">
         <div className="text-red-500 text-lg mb-4">{error}</div>
         <button 
-          onClick={loadNewPuzzle}
+          onClick={loadRandomPuzzle}
           className="px-6 py-3 bg-blue-500 text-white font-bold rounded-xl transition-all duration-200 
                     shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 active:shadow-md
                     border-b-4 border-blue-700 hover:border-blue-800"
@@ -317,9 +371,47 @@ export default function Board() {
           <ControlButton onClick={restartPuzzle} title="Reset current puzzle to starting position">
             Restart Puzzle
           </ControlButton>
-          <ControlButton onClick={loadNewPuzzle} title="Load a new random puzzle">
-            Next Puzzle
-          </ControlButton>
+          
+          {/* Three navigation buttons */}
+          <div className="flex gap-1">
+            <button
+              onClick={loadPreviousPuzzle}
+              className="flex-1 px-3 py-3 text-black font-bold rounded-xl transition-all duration-200 
+                        shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 active:shadow-md
+                        border-b-4 border-gray-700 hover:border-gray-800
+                        hover:brightness-110 active:brightness-95 relative z-10 text-xl"
+              style={{ backgroundColor: 'var(--black-cell-color)' }}
+              title="Previous puzzle"
+              disabled={isLoadingNewPuzzle}
+            >
+              ←
+            </button>
+            <button
+              onClick={loadRandomPuzzle}
+              className="flex-1 px-3 py-3 text-black font-bold rounded-xl transition-all duration-200 
+                        shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 active:shadow-md
+                        border-b-4 border-gray-700 hover:border-gray-800
+                        hover:brightness-110 active:brightness-95 relative z-10 text-xl"
+              style={{ backgroundColor: 'var(--black-cell-color)' }}
+              title="Random puzzle"
+              disabled={isLoadingNewPuzzle}
+            >
+              🎲
+            </button>
+            <button
+              onClick={loadNextPuzzle}
+              className="flex-1 px-3 py-3 text-black font-bold rounded-xl transition-all duration-200 
+                        shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 active:shadow-md
+                        border-b-4 border-gray-700 hover:border-gray-800
+                        hover:brightness-110 active:brightness-95 relative z-10 text-xl"
+              style={{ backgroundColor: 'var(--black-cell-color)' }}
+              title="Next puzzle"
+              disabled={isLoadingNewPuzzle}
+            >
+              →
+            </button>
+          </div>
+          
           <ControlButton onClick={sharePuzzle} title="Create a shared room for this puzzle">
             Share Puzzle
           </ControlButton>
