@@ -396,12 +396,18 @@ export default function Board() {
               title="Random puzzle"
               disabled={isLoadingNewPuzzle}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M 4 9 L 8 9 C 12 9, 12 15, 16 15 L 19 15" />
-                <polyline points="18,13 21,15 18,17" />
-
-                <path d="M 4 15 L 8 15 C 12 15, 12 9, 16 9 L 19 9" />
-                <polyline points="18,7 21,9 18,11" />
+              <svg fill="#000000" width="800px" height="800px" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+                <g fill-rule="evenodd">
+                  <path d="M24.898 100.907a7.97 7.97 0 0 1 8.035-7.935l80.011.623c4.419.034 8.209 3.635 8.466 8.042l.517 8.868 26.68-42.392a7.776 7.776 0 0 1 10.94-2.349l66.996 44.369a8.03 8.03 0 0 1 2.275 11.113l-43.766 66.506c-2.432 3.695-7.447 4.8-11.197 2.47l-51.928-32.265v26.49c0 4.419-3.583 8-7.993 8H32.498a7.949 7.949 0 0 1-7.959-7.998l.36-83.542zm11.828 6.694l-.189 71.811 74.127.073-.035-29.78-5.954-4.119c-1.809-1.25-2.375-3.81-1.257-5.71L111 127l-.466-19.749-73.808.35zM156.483 79L118 138.79l60.965 38.32 37.612-58.539L156.483 79z" />
+                  <circle cx="138" cy="135" r="8" />
+                  <circle cx="165" cy="130" r="8" />
+                  <circle cx="193" cy="125" r="8" />
+                  <circle cx="50" cy="124" r="8" />
+                  <circle cx="73" cy="145" r="8" />
+                  <circle cx="95" cy="123" r="8" />
+                  <circle cx="51" cy="165" r="8" />
+                  <circle cx="95" cy="165" r="8" />
+                </g>
               </svg>
             </button>
             <button
