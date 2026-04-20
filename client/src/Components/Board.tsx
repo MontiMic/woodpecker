@@ -396,21 +396,8 @@ export default function Board() {
               title="Random puzzle"
               disabled={isLoadingNewPuzzle}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mx-auto" viewBox="0 0 24 24" fill="currentColor">
-                {/* First die */}
-                <rect x="2" y="6" width="8" height="8" rx="1.5" fill="currentColor" />
-                <circle cx="4.5" cy="8.5" r="1" fill="white" />
-                <circle cx="7.5" cy="8.5" r="1" fill="white" />
-                <circle cx="4.5" cy="11.5" r="1" fill="white" />
-                <circle cx="7.5" cy="11.5" r="1" fill="white" />
-                
-                {/* Second die */}
-                <rect x="14" y="10" width="8" height="8" rx="1.5" fill="currentColor" />
-                <circle cx="16.5" cy="12.5" r="1" fill="white" />
-                <circle cx="16.5" cy="15.5" r="1" fill="white" />
-                <circle cx="19.5" cy="12.5" r="1" fill="white" />
-                <circle cx="19.5" cy="15.5" r="1" fill="white" />
-                <circle cx="18" cy="14" r="1" fill="white" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
             <button
