@@ -391,12 +391,27 @@ export default function Board() {
               className="flex-1 px-3 py-3 text-black font-bold rounded-xl transition-all duration-200 
                         shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 active:shadow-md
                         border-b-4 border-gray-700 hover:border-gray-800
-                        hover:brightness-110 active:brightness-95 relative z-10 text-xl"
+                        hover:brightness-110 active:brightness-95 relative z-10"
               style={{ backgroundColor: 'var(--black-cell-color)' }}
               title="Random puzzle"
               disabled={isLoadingNewPuzzle}
             >
-              🎲
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mx-auto" viewBox="0 0 24 24" fill="currentColor">
+                {/* First die */}
+                <rect x="2" y="6" width="8" height="8" rx="1.5" fill="currentColor" />
+                <circle cx="4.5" cy="8.5" r="1" fill="white" />
+                <circle cx="7.5" cy="8.5" r="1" fill="white" />
+                <circle cx="4.5" cy="11.5" r="1" fill="white" />
+                <circle cx="7.5" cy="11.5" r="1" fill="white" />
+                
+                {/* Second die */}
+                <rect x="14" y="10" width="8" height="8" rx="1.5" fill="currentColor" />
+                <circle cx="16.5" cy="12.5" r="1" fill="white" />
+                <circle cx="16.5" cy="15.5" r="1" fill="white" />
+                <circle cx="19.5" cy="12.5" r="1" fill="white" />
+                <circle cx="19.5" cy="15.5" r="1" fill="white" />
+                <circle cx="18" cy="14" r="1" fill="white" />
+              </svg>
             </button>
             <button
               onClick={loadNextPuzzle}
