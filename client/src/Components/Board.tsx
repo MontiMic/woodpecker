@@ -246,7 +246,7 @@ export default function Board() {
     });
   }
   
-  useEffect(() => { loadNewPuzzle(); }, []);
+  useEffect(() => { loadRandomPuzzle(); }, []);
   
   useEffect(() => {
     if (isLoggedIn && puzzleIndex > 0) {
