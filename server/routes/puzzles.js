@@ -60,11 +60,11 @@ router.get('/list', authenticateToken, async (req, res) => {
         
         // Fetch user evaluations
         const userEvaluations = await getUserEvaluations(username);
-        
-        // Build evaluation lookup map (puzzleId -> evaluation)
+
         const evaluationMap = new Map();
         userEvaluations.forEach(evalItem => {
-            evaluationMap.set(evalItem.puzzle_id, evalItem.evaluation);
+            const puzzleIdStr = String(evalItem.puzzle_id);
+            evaluationMap.set(puzzleIdStr, evalItem.evaluation);
         });
         
         // Build puzzle summary items
