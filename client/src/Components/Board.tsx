@@ -1,4 +1,3 @@
-// Board.tsx
 import { useEffect, useState } from "react";
 import { DeskCell, WHITE_SIDE_CELLS, BLACK_SIDE_CELLS, PieceType } from "../defs";
 import { Difficulty } from "./types";
@@ -16,7 +15,11 @@ import SolutionBox from "./SolutionBox";
 import { PuzzleData, BoardState } from "./types";
 import { DIFFICULTY_RANGES } from "./constants";
 
-export default function Board() {
+interface BoardProps {
+  onBrowsePuzzles?: () => void;
+}
+
+export default function Board({ onBrowsePuzzles }: BoardProps) {
   const navigate = useNavigate();
   const [showLoginPage, setShowLoginPage] = useState<boolean>(false);
   const [showProfilePage, setShowProfilePage] = useState<boolean>(false);
@@ -444,7 +447,7 @@ export default function Board() {
           {isLoggedIn && (
             <ControlButton onClick={async () => {
               await savePendingEvaluation();
-              navigate('/puzzles');
+              onBrowsePuzzles?.();
             }} title="Browse all puzzles">
               Browse Puzzles
             </ControlButton>

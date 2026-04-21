@@ -7,7 +7,12 @@ import PuzzleDifficultyBadge from './PuzzleDifficultyBadge';
 import ChessBoard from './ChessBoard';
 import { fenToBoardMap, SIDE_CELLS_MAP } from './utils/boardUtils';
 
-export default function PuzzleListPage() {
+interface PuzzleListPageProps {
+    onClose?: () => void;
+    onSelectPuzzle?: (puzzleId: string) => void;
+}
+
+export default function PuzzleListPage({ onClose, onSelectPuzzle }: PuzzleListPageProps) {
     const navigate = useNavigate();
     
     // Auth state
@@ -88,7 +93,10 @@ export default function PuzzleListPage() {
     }, [isAuthorized, page, pageSize, difficultyFilters, evaluationFilters, sortBy, sortOrder]);
 
     const handlePuzzleClick = (puzzleId: number) => {
-        navigate(`/?puzzleId=${puzzleId}`);
+        onSelectPuzzle?.(String(puzzleId));
+        if (!onSelectPuzzle) {
+            navigate(`/?puzzleId=${puzzleId}`);
+        }
     };
 
     const handlePuzzleHover = async (puzzle: PuzzleListItem, event: React.MouseEvent) => {
@@ -146,7 +154,12 @@ export default function PuzzleListPage() {
                 {/* Header */}
                 <div className="mb-8">
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => {
+                            onClose?.();
+                            if (!onClose) {
+                                navigate('/');
+                            }
+                        }}
                         className="group text-neutral-400 hover:text-white font-medium transition-all duration-200
                                   flex items-center gap-2"
                     >
