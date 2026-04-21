@@ -528,6 +528,7 @@ export default function PuzzleListPage() {
                                     selectedCell={null}
                                     onCellClick={() => {}}
                                     flipped={false}
+                                    className="w-full h-full"
                                 />
                             </div>
                             <div className="mt-2 text-xs text-neutral-600 italic text-center">

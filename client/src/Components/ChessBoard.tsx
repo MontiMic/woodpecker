@@ -12,15 +12,17 @@ interface ChessBoardProps {
   isLoading?: boolean;
   loadingMessage?: string;
   flipped?: boolean;
+  className?: string;
 }
 
-export default function ChessBoard({ 
-  board, 
-  selectedCell, 
-  onCellClick, 
+export default function ChessBoard({
+  board,
+  selectedCell,
+  onCellClick,
   isLoading = false,
   loadingMessage = "Loading puzzle...",
-  flipped = false
+  flipped = false,
+  className = "w-[min(100vh,100vw)]"
 }: ChessBoardProps) {
   const gridElement = useRef<HTMLDivElement>(null);
 
@@ -84,7 +86,7 @@ export default function ChessBoard({
 
   return (
     <div className={`relative transition-opacity duration-300 ${isLoading ? 'opacity-70' : 'opacity-100'}`}>
-      <div ref={gridElement} className="desk-grid-area w-[min(100vh,100vw)] p-3">
+      <div ref={gridElement} className={`desk-grid-area ${className} p-3`}>
         <div className="board-subgrid checkered-background rounded-lg shadow-2xl">
           {BOARD_CELLS.map(cell => {
             const visualCell = getVisualCell(cell);
