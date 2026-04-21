@@ -4,8 +4,6 @@ import { checkAuth, getPuzzleList } from './utils/apiUtils';
 import { PuzzleListItem, Difficulty, EvaluationStatus, PuzzleListSortBy, SortOrder } from './types';
 import PuzzleStatusBadge from './PuzzleStatusBadge';
 import PuzzleDifficultyBadge from './PuzzleDifficultyBadge';
-import ChessBoard from './ChessBoard';
-import { fenToBoardMap, SIDE_CELLS_MAP } from './utils/boardUtils';
 
 interface PuzzleListPageProps {
     onClose?: () => void;
@@ -35,8 +33,6 @@ export default function PuzzleListPage({ onClose, onSelectPuzzle }: PuzzleListPa
     // UI state
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [hoveredPuzzle, setHoveredPuzzle] = useState<{ puzzle: PuzzleListItem; fen: string } | null>(null);
-    const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
 
     // Check authentication on mount
     useEffect(() => {
@@ -97,26 +93,6 @@ export default function PuzzleListPage({ onClose, onSelectPuzzle }: PuzzleListPa
         if (!onSelectPuzzle) {
             navigate(`/?puzzleId=${puzzleId}`);
         }
-    };
-
-    const handlePuzzleHover = async (puzzle: PuzzleListItem, event: React.MouseEvent) => {
-        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-        setHoverPosition({ x: rect.right + 10, y: rect.top });
-        
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/puzzles/${puzzle.puzzleId}`);
-            if (response.ok) {
-                const data = await response.json();
-                setHoveredPuzzle({ puzzle, fen: data.fen });
-            }
-        } catch (err) {
-            console.error('Error fetching puzzle preview:', err);
-        }
-    };
-
-    const handlePuzzleLeave = () => {
-        setHoveredPuzzle(null);
-        setHoverPosition(null);
     };
 
     const handleSortChange = (newSortBy: PuzzleListSortBy) => {
@@ -345,8 +321,6 @@ export default function PuzzleListPage({ onClose, onSelectPuzzle }: PuzzleListPa
                                         key={puzzle.puzzleId}
                                         className="hover:bg-blue-50 cursor-pointer transition-all duration-150 group relative"
                                         onClick={() => handlePuzzleClick(puzzle.puzzleId)}
-                                        onMouseEnter={(e) => handlePuzzleHover(puzzle, e)}
-                                        onMouseLeave={handlePuzzleLeave}
                                     >
                                         <td className="px-6 py-5 whitespace-nowrap text-sm font-bold text-neutral-900">
                                             #{puzzle.puzzleId}
@@ -388,8 +362,6 @@ export default function PuzzleListPage({ onClose, onSelectPuzzle }: PuzzleListPa
                             <div
                                 key={puzzle.puzzleId}
                                 onClick={() => handlePuzzleClick(puzzle.puzzleId)}
-                                onMouseEnter={(e) => handlePuzzleHover(puzzle, e)}
-                                onMouseLeave={handlePuzzleLeave}
                                 className="rounded-2xl p-5 border border-white/20 cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-200 group"
                                 style={{ backgroundColor: 'var(--white-cell-color)' }}
                             >
@@ -521,35 +493,6 @@ export default function PuzzleListPage({ onClose, onSelectPuzzle }: PuzzleListPa
                     </div>
                 )}
 
-                {/* Hover Preview Tooltip */}
-                {hoveredPuzzle && hoverPosition && (
-                    <div
-                        className="fixed z-50 pointer-events-none"
-                        style={{
-                            left: `${hoverPosition.x}px`,
-                            top: `${hoverPosition.y}px`,
-                            transform: 'translateY(-50%)'
-                        }}
-                    >
-                        <div className="bg-white rounded-lg shadow-2xl border-2 border-blue-400 p-3">
-                            <div className="text-xs font-bold text-neutral-800 mb-2">
-                                Puzzle #{hoveredPuzzle.puzzle.puzzleId} Preview
-                            </div>
-                            <div className="w-64 h-64 bg-neutral-100 rounded overflow-hidden">
-                                <ChessBoard
-                                    board={new Map([...fenToBoardMap(hoveredPuzzle.fen), ...SIDE_CELLS_MAP])}
-                                    selectedCell={null}
-                                    onCellClick={() => {}}
-                                    flipped={false}
-                                    className="w-full h-full"
-                                />
-                            </div>
-                            <div className="mt-2 text-xs text-neutral-600 italic text-center">
-                                Click row to solve
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );
