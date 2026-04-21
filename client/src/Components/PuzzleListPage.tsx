@@ -509,38 +509,33 @@ export default function PuzzleListPage() {
                 )}
 
                 {/* Hover Preview Tooltip */}
-                {hoveredPuzzle && hoverPosition && (() => {
-                    const boardFromFen = fenToBoardMap(hoveredPuzzle.fen);
-                    const previewBoard = new Map([...boardFromFen, ...SIDE_CELLS_MAP]);
-                    
-                    return (
-                        <div
-                            className="fixed z-50 pointer-events-none"
-                            style={{
-                                left: `${hoverPosition.x}px`,
-                                top: `${hoverPosition.y}px`,
-                                transform: 'translateY(-50%)'
-                            }}
-                        >
-                            <div className="bg-white rounded-lg shadow-2xl border-2 border-blue-400 p-3">
-                                <div className="text-xs font-bold text-neutral-800 mb-2">
-                                    Puzzle #{hoveredPuzzle.puzzle.puzzleId} Preview
-                                </div>
-                                <div className="w-64 h-64 bg-neutral-100 rounded overflow-hidden">
-                                    <ChessBoard
-                                        board={previewBoard}
-                                        selectedCell={null}
-                                        onCellClick={() => {}}
-                                        flipped={false}
-                                    />
-                                </div>
-                                <div className="mt-2 text-xs text-neutral-600 italic text-center">
-                                    Click row to solve
-                                </div>
+                {hoveredPuzzle && hoverPosition && (
+                    <div
+                        className="fixed z-50 pointer-events-none"
+                        style={{
+                            left: `${hoverPosition.x}px`,
+                            top: `${hoverPosition.y}px`,
+                            transform: 'translateY(-50%)'
+                        }}
+                    >
+                        <div className="bg-white rounded-lg shadow-2xl border-2 border-blue-400 p-3">
+                            <div className="text-xs font-bold text-neutral-800 mb-2">
+                                Puzzle #{hoveredPuzzle.puzzle.puzzleId} Preview
+                            </div>
+                            <div className="w-64 h-64 bg-neutral-100 rounded overflow-hidden">
+                                <ChessBoard
+                                    board={new Map([...fenToBoardMap(hoveredPuzzle.fen), ...SIDE_CELLS_MAP])}
+                                    selectedCell={null}
+                                    onCellClick={() => {}}
+                                    flipped={false}
+                                />
+                            </div>
+                            <div className="mt-2 text-xs text-neutral-600 italic text-center">
+                                Click row to solve
                             </div>
                         </div>
-                    );
-                })()}
+                    </div>
+                )}
             </div>
         </div>
     );
