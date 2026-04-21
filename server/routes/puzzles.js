@@ -1,7 +1,145 @@
 const express = require('express');
 const Puzzle = require('../models/Puzzle');
-const { extractPuzzlesFromDocument } = require('../utils/puzzles');
+const { extractPuzzlesFromDocument, getDifficultyFromPuzzleId } = require('../utils/puzzles');
+const authenticateToken = require('../middleware/auth');
+const { getUserEvaluations } = require('../utils/evaluations');
 const router = express.Router();
+
+// Get all puzzles with user evaluation status (authenticated)
+router.get('/list', authenticateToken, async (req, res) => {
+    try {
+        const username = req.user.username;
+        
+        // Parse and validate query parameters
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const pageSize = Math.max(1, Math.min(100, parseInt(req.query.pageSize) || 50));
+        const difficultyFilter = req.query.difficulty || 'all';
+        const evaluationFilter = req.query.evaluation || 'all';
+        const sortBy = req.query.sortBy || 'puzzleId';
+        const sortOrder = req.query.sortOrder || 'asc';
+        
+        // Validate filter parameters
+        const validDifficulties = ['easy', 'medium', 'hard', 'all'];
+        const validEvaluations = ['solved', 'partial', 'failed', 'unattempted', 'all'];
+        const validSortBy = ['puzzleId', 'difficulty', 'evaluation'];
+        const validSortOrder = ['asc', 'desc'];
+        
+        if (!validDifficulties.includes(difficultyFilter)) {
+            return res.status(400).json({ error: 'Invalid difficulty filter' });
+        }
+        if (!validEvaluations.includes(evaluationFilter)) {
+            return res.status(400).json({ error: 'Invalid evaluation filter' });
+        }
+        if (!validSortBy.includes(sortBy)) {
+            return res.status(400).json({ error: 'Invalid sortBy parameter' });
+        }
+        if (!validSortOrder.includes(sortOrder)) {
+            return res.status(400).json({ error: 'Invalid sortOrder parameter' });
+        }
+        
+        // Fetch puzzle document
+        const doc = await Puzzle.findOne();
+        if (!doc) {
+            return res.status(404).json({ error: 'Puzzle data not found' });
+        }
+        
+        // Fetch user evaluations
+        const userEvaluations = await getUserEvaluations(username);
+        
+        // Build evaluation lookup map (puzzleId -> evaluation)
+        const evaluationMap = new Map();
+        userEvaluations.forEach(evalItem => {
+            evaluationMap.set(evalItem.puzzle_id, evalItem.evaluation);
+        });
+        
+        // Build puzzle summary items
+        const allItems = [];
+        for (let puzzleId = 1; puzzleId <= 1128; puzzleId++) {
+            const puzzleKey = puzzleId.toString();
+            const puzzle = doc[puzzleKey];
+            
+            if (puzzle) {
+                const difficulty = getDifficultyFromPuzzleId(puzzleId);
+                const evaluation = evaluationMap.get(puzzleKey) || null;
+                
+                allItems.push({
+                    puzzleId: puzzleId,
+                    description: puzzle.descr,
+                    difficulty: difficulty,
+                    evaluation: evaluation
+                });
+            }
+        }
+        
+        // Apply filters
+        let filteredItems = allItems;
+        
+        // Filter by difficulty
+        if (difficultyFilter !== 'all') {
+            filteredItems = filteredItems.filter(item => item.difficulty === difficultyFilter);
+        }
+        
+        // Filter by evaluation
+        if (evaluationFilter !== 'all') {
+            if (evaluationFilter === 'unattempted') {
+                filteredItems = filteredItems.filter(item => item.evaluation === null);
+            } else {
+                filteredItems = filteredItems.filter(item => item.evaluation === evaluationFilter);
+            }
+        }
+        
+        // Apply sorting
+        filteredItems.sort((a, b) => {
+            let comparison = 0;
+            
+            if (sortBy === 'puzzleId') {
+                comparison = a.puzzleId - b.puzzleId;
+            } else if (sortBy === 'difficulty') {
+                const difficultyOrder = { easy: 1, medium: 2, hard: 3 };
+                comparison = difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+            } else if (sortBy === 'evaluation') {
+                const evaluationOrder = { solved: 1, partial: 2, failed: 3, null: 4 };
+                const aOrder = evaluationOrder[a.evaluation] || evaluationOrder.null;
+                const bOrder = evaluationOrder[b.evaluation] || evaluationOrder.null;
+                comparison = aOrder - bOrder;
+            }
+            
+            return sortOrder === 'asc' ? comparison : -comparison;
+        });
+        
+        // Calculate pagination
+        const totalItems = filteredItems.length;
+        const totalPages = Math.ceil(totalItems / pageSize);
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedItems = filteredItems.slice(startIndex, endIndex);
+        
+        // Build response
+        const response = {
+            items: paginatedItems,
+            pagination: {
+                page: page,
+                pageSize: pageSize,
+                totalItems: totalItems,
+                totalPages: totalPages
+            },
+            filters: {
+                difficulty: difficultyFilter === 'all' ? null : difficultyFilter,
+                evaluation: evaluationFilter === 'all' ? null : evaluationFilter
+            },
+            sorting: {
+                sortBy: sortBy,
+                sortOrder: sortOrder
+            }
+        };
+        
+        res.json(response);
+        
+    } catch (error) {
+        console.error('Error getting puzzle list:', error);
+        res.status(500).json({ error: 'Failed to get puzzle list' });
+    }
+});
 
 // Get all puzzles
 router.get('/', async (req, res) => {

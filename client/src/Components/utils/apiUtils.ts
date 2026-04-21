@@ -399,3 +399,69 @@ export async function getUserStats(): Promise<{
         return { success: false, error: 'Failed to get user stats' };
     }
 }
+
+export async function getPuzzleList(params: {
+    page?: number;
+    pageSize?: number;
+    difficulty?: string;
+    evaluation?: string;
+    sortBy?: string;
+    sortOrder?: string;
+} = {}): Promise<{
+    items: Array<{
+        puzzleId: number;
+        description: string;
+        difficulty: string;
+        evaluation: string | null;
+    }>;
+    pagination: {
+        page: number;
+        pageSize: number;
+        totalItems: number;
+        totalPages: number;
+    };
+    filters: {
+        difficulty: string | null;
+        evaluation: string | null;
+    };
+    sorting: {
+        sortBy: string;
+        sortOrder: string;
+    };
+}> {
+    try {
+        const token = getToken();
+        
+        if (!token) {
+            throw new Error('Not authenticated');
+        }
+
+        // Build query string from params
+        const queryParams = new URLSearchParams();
+        if (params.page !== undefined) queryParams.append('page', params.page.toString());
+        if (params.pageSize !== undefined) queryParams.append('pageSize', params.pageSize.toString());
+        if (params.difficulty && params.difficulty !== 'all') queryParams.append('difficulty', params.difficulty);
+        if (params.evaluation && params.evaluation !== 'all') queryParams.append('evaluation', params.evaluation);
+        if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+        if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+
+        const queryString = queryParams.toString();
+        const url = `${API_BASE_URL}/puzzles/list${queryString ? `?${queryString}` : ''}`;
+
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to get puzzle list (${response.status})`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error getting puzzle list:', error);
+        throw error;
+    }
+}

@@ -21,6 +21,19 @@ function extractPuzzlesFromDocument(doc) {
     return puzzles.sort((a, b) => a.puzzle_id - b.puzzle_id);
 }
 
+function getDifficultyFromPuzzleId(puzzleId) {
+    const id = parseInt(puzzleId);
+    if (id >= 1 && id <= 222) {
+        return 'easy';
+    } else if (id >= 223 && id <= 984) {
+        return 'medium';
+    } else if (id >= 985 && id <= 1128) {
+        return 'hard';
+    }
+    return null;
+}
+
 module.exports = {
-    extractPuzzlesFromDocument
+    extractPuzzlesFromDocument,
+    getDifficultyFromPuzzleId
 };

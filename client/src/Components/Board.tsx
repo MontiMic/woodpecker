@@ -241,7 +241,22 @@ export default function Board() {
     });
   }
   
-  useEffect(() => { loadRandomPuzzle(); }, []);
+  // Check for puzzleId in URL on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const puzzleIdParam = urlParams.get('puzzleId');
+    
+    if (puzzleIdParam) {
+      const puzzleId = parseInt(puzzleIdParam, 10);
+      if (!isNaN(puzzleId) && puzzleId > 0) {
+        loadPuzzleById(puzzleId);
+        return;
+      }
+    }
+    
+    // If no valid puzzleId, load random puzzle
+    loadRandomPuzzle();
+  }, []);
   
   useEffect(() => {
     if (isLoggedIn && puzzleIndex > 0) {
@@ -429,6 +444,11 @@ export default function Board() {
           <ControlButton onClick={sharePuzzle} title="Create a shared room for this puzzle">
             Share Puzzle
           </ControlButton>
+          {isLoggedIn && (
+            <ControlButton onClick={() => navigate('/puzzles')} title="Browse all puzzles">
+              Browse Puzzles
+            </ControlButton>
+          )}
           <ControlButton onClick={() => setIsFlipped(!isFlipped)} title="Flip the board orientation">
             Flip Board
           </ControlButton>
