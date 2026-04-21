@@ -8,18 +8,24 @@ interface PuzzleDifficultyBadgeProps {
 const PuzzleDifficultyBadge: React.FC<PuzzleDifficultyBadgeProps> = ({ difficulty }) => {
   const difficultyConfig = {
     easy: {
-      bgColor: 'bg-green-100',
-      textColor: 'text-green-800',
+      bgColor: 'bg-emerald-50',
+      textColor: 'text-emerald-700',
+      borderColor: 'border-emerald-200',
+      dotColor: 'bg-emerald-400',
       label: 'Easy'
     },
     medium: {
-      bgColor: 'bg-amber-100',
-      textColor: 'text-amber-800',
+      bgColor: 'bg-amber-50',
+      textColor: 'text-amber-700',
+      borderColor: 'border-amber-200',
+      dotColor: 'bg-amber-400',
       label: 'Medium'
     },
     hard: {
-      bgColor: 'bg-red-100',
-      textColor: 'text-red-800',
+      bgColor: 'bg-rose-50',
+      textColor: 'text-rose-700',
+      borderColor: 'border-rose-200',
+      dotColor: 'bg-rose-400',
       label: 'Hard'
     }
   };
@@ -27,11 +33,12 @@ const PuzzleDifficultyBadge: React.FC<PuzzleDifficultyBadgeProps> = ({ difficult
   const config = difficultyConfig[difficulty];
 
   return (
-    <span 
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor}`}
+    <span
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border ${config.bgColor} ${config.textColor} ${config.borderColor}`}
       role="status"
       aria-label={`Difficulty: ${config.label}`}
     >
+      <span className={`h-2 w-2 rounded-full ${config.dotColor}`}></span>
       {config.label}
     </span>
   );

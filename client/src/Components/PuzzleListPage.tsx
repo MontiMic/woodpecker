@@ -118,35 +118,44 @@ export default function PuzzleListPage() {
 
     return (
         <div className="min-h-screen bg-black-background">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-10">
                     <button
                         onClick={() => navigate('/')}
-                        className="text-neutral-300 hover:text-white font-medium transition-colors duration-200
-                                  flex items-center gap-2 hover:gap-3"
+                        className="group text-neutral-400 hover:text-white font-medium transition-all duration-200
+                                  flex items-center gap-2 mb-6"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transition-transform group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
                         </svg>
                         Back to Puzzle
                     </button>
+                    <h1 className="text-4xl font-bold text-white mb-2">Puzzle Library</h1>
+                    <p className="text-neutral-400 text-lg">Browse and solve chess puzzles</p>
                 </div>
 
                 {/* Filters */}
                 <div
-                    className="rounded-xl p-6 mb-6 border-2 border-white/10"
+                    className="rounded-2xl p-8 mb-8 border border-white/20 shadow-xl"
                     style={{ backgroundColor: 'var(--white-cell-color)' }}
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <h2 className="text-xl font-bold text-neutral-800 mb-6 flex items-center gap-2">
+                        <svg className="h-5 w-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        Filter Puzzles
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Difficulty Filter */}
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-3">
-                                Difficulty
+                            <label className="block text-sm font-bold text-neutral-700 mb-4 uppercase tracking-wide">
+                                Difficulty Level
                             </label>
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 {(['easy', 'medium', 'hard'] as Difficulty[]).map((diff) => (
-                                    <label key={diff} className="flex items-center cursor-pointer hover:bg-neutral-50 p-2 rounded">
+                                    <label key={diff} className="flex items-center cursor-pointer hover:bg-neutral-50 p-3 rounded-lg transition-colors group">
                                         <input
                                             type="checkbox"
                                             checked={difficultyFilters.has(diff)}
@@ -160,9 +169,9 @@ export default function PuzzleListPage() {
                                                 setDifficultyFilters(newFilters);
                                                 setPage(1);
                                             }}
-                                            className="w-4 h-4 text-blue-600 border-neutral-300 rounded focus:ring-blue-500"
+                                            className="w-5 h-5 text-blue-600 border-neutral-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                         />
-                                        <span className="ml-2 text-sm text-neutral-700 capitalize">{diff}</span>
+                                        <span className="ml-3 text-sm font-medium text-neutral-700 capitalize group-hover:text-neutral-900">{diff}</span>
                                     </label>
                                 ))}
                             </div>
@@ -170,17 +179,16 @@ export default function PuzzleListPage() {
 
                         {/* Status Filter */}
                         <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-3">
-                                Status
+                            <label className="block text-sm font-bold text-neutral-700 mb-4 uppercase tracking-wide">
+                                Completion Status
                             </label>
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 {[
                                     { value: 'unattempted', label: 'Not Started' },
                                     { value: 'solved', label: 'Completed' },
-                                    { value: 'partial', label: 'In Progress' },
                                     { value: 'failed', label: 'Failed' }
                                 ].map((status) => (
-                                    <label key={status.value} className="flex items-center cursor-pointer hover:bg-neutral-50 p-2 rounded">
+                                    <label key={status.value} className="flex items-center cursor-pointer hover:bg-neutral-50 p-3 rounded-lg transition-colors group">
                                         <input
                                             type="checkbox"
                                             checked={evaluationFilters.has(status.value as EvaluationStatus | 'unattempted')}
@@ -194,9 +202,9 @@ export default function PuzzleListPage() {
                                                 setEvaluationFilters(newFilters);
                                                 setPage(1);
                                             }}
-                                            className="w-4 h-4 text-blue-600 border-neutral-300 rounded focus:ring-blue-500"
+                                            className="w-5 h-5 text-blue-600 border-neutral-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                         />
-                                        <span className="ml-2 text-sm text-neutral-700">{status.label}</span>
+                                        <span className="ml-3 text-sm font-medium text-neutral-700 group-hover:text-neutral-900">{status.label}</span>
                                     </label>
                                 ))}
                             </div>
@@ -204,9 +212,23 @@ export default function PuzzleListPage() {
                     </div>
                     
                     {/* Results Summary */}
-                    <div className="mt-4 pt-4 border-t border-neutral-200">
-                        <div className="text-sm text-neutral-600">
-                            <span className="font-semibold text-neutral-800">{totalItems}</span> puzzles found
+                    <div className="mt-6 pt-6 border-t border-neutral-200">
+                        <div className="flex items-center justify-between">
+                            <div className="text-sm text-neutral-600">
+                                Showing <span className="font-bold text-neutral-900 text-base">{totalItems}</span> {totalItems === 1 ? 'puzzle' : 'puzzles'}
+                            </div>
+                            {(difficultyFilters.size < 3 || evaluationFilters.size < 3) && (
+                                <button
+                                    onClick={() => {
+                                        setDifficultyFilters(new Set(['easy', 'medium', 'hard']));
+                                        setEvaluationFilters(new Set(['unattempted', 'solved', 'partial', 'failed']));
+                                        setPage(1);
+                                    }}
+                                    className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                                >
+                                    Clear all filters
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -233,83 +255,86 @@ export default function PuzzleListPage() {
 
                 {/* Puzzle Table - Desktop */}
                 {!isLoading && items.length > 0 && (
-                    <div className="hidden md:block overflow-x-auto rounded-xl border-2 border-white/10"
+                    <div className="hidden md:block overflow-hidden rounded-2xl border border-white/20 shadow-xl"
                          style={{ backgroundColor: 'var(--white-cell-color)' }}>
                         <table className="min-w-full divide-y divide-neutral-200">
-                            <thead className="bg-neutral-50">
+                            <thead className="bg-gradient-to-r from-neutral-50 to-neutral-100">
                                 <tr>
-                                    <th 
-                                        scope="col" 
-                                        className="px-6 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100"
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-xs font-bold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-200 transition-colors"
                                         onClick={() => handleSortChange('puzzleId')}
                                     >
                                         <div className="flex items-center gap-2">
                                             ID
                                             {sortBy === 'puzzleId' && (
-                                                <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                                                <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                                             )}
                                         </div>
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider">
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-neutral-700 uppercase tracking-wider">
                                         Description
                                     </th>
-                                    <th 
-                                        scope="col" 
-                                        className="px-6 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100"
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-xs font-bold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-200 transition-colors"
                                         onClick={() => handleSortChange('difficulty')}
                                     >
                                         <div className="flex items-center gap-2">
                                             Difficulty
                                             {sortBy === 'difficulty' && (
-                                                <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                                                <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                                             )}
                                         </div>
                                     </th>
-                                    <th 
-                                        scope="col" 
-                                        className="px-6 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100"
+                                    <th
+                                        scope="col"
+                                        className="px-6 py-4 text-left text-xs font-bold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-200 transition-colors"
                                         onClick={() => handleSortChange('evaluation')}
                                     >
                                         <div className="flex items-center gap-2">
                                             Status
                                             {sortBy === 'evaluation' && (
-                                                <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                                                <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                                             )}
                                         </div>
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-neutral-700 uppercase tracking-wider">
+                                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-neutral-700 uppercase tracking-wider">
                                         Action
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-neutral-200">
+                            <tbody className="bg-white divide-y divide-neutral-100">
                                 {items.map((puzzle) => (
-                                    <tr 
+                                    <tr
                                         key={puzzle.puzzleId}
-                                        className="hover:bg-neutral-50 cursor-pointer transition-colors"
+                                        className="hover:bg-blue-50 cursor-pointer transition-all duration-150 group"
                                         onClick={() => handlePuzzleClick(puzzle.puzzleId)}
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
+                                        <td className="px-6 py-5 whitespace-nowrap text-sm font-bold text-neutral-900">
                                             #{puzzle.puzzleId}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-neutral-700 max-w-md truncate">
-                                            {puzzle.description}
+                                        <td className="px-6 py-5 text-sm text-neutral-700 max-w-md">
+                                            <div className="line-clamp-2">{puzzle.description}</div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-6 py-5 whitespace-nowrap">
                                             <PuzzleDifficultyBadge difficulty={puzzle.difficulty as Difficulty} />
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-6 py-5 whitespace-nowrap">
                                             <PuzzleStatusBadge status={puzzle.evaluation as EvaluationStatus | null} />
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handlePuzzleClick(puzzle.puzzleId);
                                                 }}
-                                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-xs uppercase tracking-wide shadow-sm hover:shadow-md"
                                             >
-                                                Solve →
+                                                Solve
+                                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                </svg>
                                             </button>
                                         </td>
                                     </tr>
@@ -326,24 +351,27 @@ export default function PuzzleListPage() {
                             <div
                                 key={puzzle.puzzleId}
                                 onClick={() => handlePuzzleClick(puzzle.puzzleId)}
-                                className="rounded-xl p-4 border-2 border-white/10 cursor-pointer hover:border-white/20 transition-all"
+                                className="rounded-2xl p-5 border border-white/20 cursor-pointer hover:border-blue-400 hover:shadow-lg transition-all duration-200 group"
                                 style={{ backgroundColor: 'var(--white-cell-color)' }}
                             >
-                                <div className="flex justify-between items-start mb-3">
-                                    <span className="text-sm font-bold text-neutral-900">#{puzzle.puzzleId}</span>
+                                <div className="flex justify-between items-start mb-4">
+                                    <span className="text-base font-bold text-neutral-900">#{puzzle.puzzleId}</span>
                                     <PuzzleStatusBadge status={puzzle.evaluation as EvaluationStatus | null} />
                                 </div>
-                                <p className="text-sm text-neutral-700 mb-3">{puzzle.description}</p>
-                                <div className="flex justify-between items-center">
+                                <p className="text-sm text-neutral-700 mb-4 leading-relaxed">{puzzle.description}</p>
+                                <div className="flex justify-between items-center pt-3 border-t border-neutral-100">
                                     <PuzzleDifficultyBadge difficulty={puzzle.difficulty as Difficulty} />
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handlePuzzleClick(puzzle.puzzleId);
                                         }}
-                                        className="text-blue-600 hover:text-blue-900 font-medium text-sm"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-xs uppercase tracking-wide shadow-sm"
                                     >
-                                        Solve →
+                                        Solve
+                                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                        </svg>
                                     </button>
                                 </div>
                             </div>
@@ -353,46 +381,58 @@ export default function PuzzleListPage() {
 
                 {/* Empty State */}
                 {!isLoading && items.length === 0 && (
-                    <div className="text-center py-12">
-                        <p className="text-neutral-400 text-lg">No puzzles found matching your filters.</p>
+                    <div className="text-center py-16 px-4">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-700 mb-4">
+                            <svg className="h-8 w-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">No puzzles found</h3>
+                        <p className="text-neutral-400 text-base mb-6">Try adjusting your filters to see more results</p>
                         <button
                             onClick={() => {
                                 setDifficultyFilters(new Set(['easy', 'medium', 'hard']));
                                 setEvaluationFilters(new Set(['unattempted', 'solved', 'partial', 'failed']));
                                 setPage(1);
                             }}
-                            className="mt-4 text-blue-400 hover:text-blue-300 font-medium"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-lg"
                         >
-                            Clear filters
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Clear all filters
                         </button>
                     </div>
                 )}
 
                 {/* Pagination */}
                 {!isLoading && totalPages > 1 && (
-                    <div className="mt-8 flex justify-center items-center gap-2">
+                    <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
                         <button
                             onClick={() => handlePageChange(page - 1)}
                             disabled={page === 1}
-                            className="px-4 py-2 rounded-lg bg-white border border-neutral-300 text-neutral-700 
-                                     hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed
-                                     transition-colors font-medium"
+                            className="px-5 py-2.5 rounded-lg bg-white border-2 border-neutral-300 text-neutral-700
+                                     hover:bg-neutral-50 hover:border-neutral-400 disabled:opacity-40 disabled:cursor-not-allowed
+                                     transition-all font-semibold shadow-sm hover:shadow flex items-center gap-2"
                         >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
                             Previous
                         </button>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap justify-center">
                             {/* Show first page */}
                             {page > 3 && (
                                 <>
                                     <button
                                         onClick={() => handlePageChange(1)}
-                                        className="px-4 py-2 rounded-lg bg-white border border-neutral-300 text-neutral-700 
-                                                 hover:bg-neutral-50 transition-colors"
+                                        className="px-4 py-2.5 rounded-lg bg-white border-2 border-neutral-300 text-neutral-700
+                                                 hover:bg-neutral-50 hover:border-neutral-400 transition-all font-semibold shadow-sm hover:shadow"
                                     >
                                         1
                                     </button>
-                                    {page > 4 && <span className="text-neutral-400">...</span>}
+                                    {page > 4 && <span className="text-neutral-500 font-bold">...</span>}
                                 </>
                             )}
                             
@@ -403,10 +443,10 @@ export default function PuzzleListPage() {
                                     <button
                                         key={p}
                                         onClick={() => handlePageChange(p)}
-                                        className={`px-4 py-2 rounded-lg border transition-colors font-medium
-                                                  ${p === page 
-                                                    ? 'bg-blue-600 border-blue-600 text-white' 
-                                                    : 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-50'}`}
+                                        className={`px-4 py-2.5 rounded-lg border-2 transition-all font-semibold shadow-sm hover:shadow
+                                                  ${p === page
+                                                    ? 'bg-blue-600 border-blue-600 text-white scale-110'
+                                                    : 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-400'}`}
                                     >
                                         {p}
                                     </button>
@@ -415,11 +455,11 @@ export default function PuzzleListPage() {
                             {/* Show last page */}
                             {page < totalPages - 2 && (
                                 <>
-                                    {page < totalPages - 3 && <span className="text-neutral-400">...</span>}
+                                    {page < totalPages - 3 && <span className="text-neutral-500 font-bold">...</span>}
                                     <button
                                         onClick={() => handlePageChange(totalPages)}
-                                        className="px-4 py-2 rounded-lg bg-white border border-neutral-300 text-neutral-700 
-                                                 hover:bg-neutral-50 transition-colors"
+                                        className="px-4 py-2.5 rounded-lg bg-white border-2 border-neutral-300 text-neutral-700
+                                                 hover:bg-neutral-50 hover:border-neutral-400 transition-all font-semibold shadow-sm hover:shadow"
                                     >
                                         {totalPages}
                                     </button>
@@ -430,11 +470,14 @@ export default function PuzzleListPage() {
                         <button
                             onClick={() => handlePageChange(page + 1)}
                             disabled={page === totalPages}
-                            className="px-4 py-2 rounded-lg bg-white border border-neutral-300 text-neutral-700 
-                                     hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed
-                                     transition-colors font-medium"
+                            className="px-5 py-2.5 rounded-lg bg-white border-2 border-neutral-300 text-neutral-700
+                                     hover:bg-neutral-50 hover:border-neutral-400 disabled:opacity-40 disabled:cursor-not-allowed
+                                     transition-all font-semibold shadow-sm hover:shadow flex items-center gap-2"
                         >
                             Next
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
                         </button>
                     </div>
                 )}
