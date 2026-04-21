@@ -20,8 +20,8 @@ export default function PuzzleListPage() {
     // Filter and pagination state
     const [page, setPage] = useState(1);
     const [pageSize] = useState(50);
-    const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | 'all'>('all');
-    const [evaluationFilter, setEvaluationFilter] = useState<EvaluationStatus | 'unattempted' | 'all'>('all');
+    const [difficultyFilters, setDifficultyFilters] = useState<Set<Difficulty>>(new Set(['easy', 'medium', 'hard']));
+    const [evaluationFilters, setEvaluationFilters] = useState<Set<EvaluationStatus | 'unattempted'>>(new Set(['unattempted', 'solved', 'partial', 'failed']));
     const [sortBy, setSortBy] = useState<PuzzleListSortBy>('puzzleId');
     const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
     
@@ -56,11 +56,15 @@ export default function PuzzleListPage() {
             setError(null);
             
             try {
+                // Convert Sets to comma-separated strings for API
+                const difficultyParam = difficultyFilters.size === 3 ? 'all' : Array.from(difficultyFilters).join(',');
+                const evaluationParam = evaluationFilters.size === 4 ? 'all' : Array.from(evaluationFilters).join(',');
+                
                 const response = await getPuzzleList({
                     page,
                     pageSize,
-                    difficulty: difficultyFilter,
-                    evaluation: evaluationFilter,
+                    difficulty: difficultyParam,
+                    evaluation: evaluationParam,
                     sortBy,
                     sortOrder
                 });
@@ -77,7 +81,7 @@ export default function PuzzleListPage() {
         };
         
         fetchPuzzles();
-    }, [isAuthorized, page, pageSize, difficultyFilter, evaluationFilter, sortBy, sortOrder]);
+    }, [isAuthorized, page, pageSize, difficultyFilters, evaluationFilters, sortBy, sortOrder]);
 
     const handlePuzzleClick = (puzzleId: number) => {
         navigate(`/?puzzleId=${puzzleId}`);
@@ -117,9 +121,9 @@ export default function PuzzleListPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <button 
+                    <button
                         onClick={() => navigate('/')}
-                        className="mb-4 text-neutral-300 hover:text-white font-medium transition-colors duration-200
+                        className="text-neutral-300 hover:text-white font-medium transition-colors duration-200
                                   flex items-center gap-2 hover:gap-3"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -127,67 +131,82 @@ export default function PuzzleListPage() {
                         </svg>
                         Back to Puzzle
                     </button>
-                    
-                    <h1 className="text-4xl font-bold text-white mb-2">Puzzle Library</h1>
-                    <p className="text-neutral-400">Browse and filter all available puzzles</p>
                 </div>
 
                 {/* Filters */}
-                <div 
+                <div
                     className="rounded-xl p-6 mb-6 border-2 border-white/10"
                     style={{ backgroundColor: 'var(--white-cell-color)' }}
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Difficulty Filter */}
                         <div>
-                            <label htmlFor="difficulty" className="block text-sm font-medium text-neutral-700 mb-2">
+                            <label className="block text-sm font-medium text-neutral-700 mb-3">
                                 Difficulty
                             </label>
-                            <select
-                                id="difficulty"
-                                value={difficultyFilter}
-                                onChange={(e) => {
-                                    setDifficultyFilter(e.target.value as Difficulty | 'all');
-                                    setPage(1);
-                                }}
-                                className="w-full px-4 py-2 rounded-lg bg-white border border-neutral-300 text-neutral-800 
-                                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value="all">All Difficulties</option>
-                                <option value="easy">Easy</option>
-                                <option value="medium">Medium</option>
-                                <option value="hard">Hard</option>
-                            </select>
+                            <div className="space-y-2">
+                                {(['easy', 'medium', 'hard'] as Difficulty[]).map((diff) => (
+                                    <label key={diff} className="flex items-center cursor-pointer hover:bg-neutral-50 p-2 rounded">
+                                        <input
+                                            type="checkbox"
+                                            checked={difficultyFilters.has(diff)}
+                                            onChange={(e) => {
+                                                const newFilters = new Set(difficultyFilters);
+                                                if (e.target.checked) {
+                                                    newFilters.add(diff);
+                                                } else {
+                                                    newFilters.delete(diff);
+                                                }
+                                                setDifficultyFilters(newFilters);
+                                                setPage(1);
+                                            }}
+                                            className="w-4 h-4 text-blue-600 border-neutral-300 rounded focus:ring-blue-500"
+                                        />
+                                        <span className="ml-2 text-sm text-neutral-700 capitalize">{diff}</span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Evaluation Filter */}
+                        {/* Status Filter */}
                         <div>
-                            <label htmlFor="evaluation" className="block text-sm font-medium text-neutral-700 mb-2">
+                            <label className="block text-sm font-medium text-neutral-700 mb-3">
                                 Status
                             </label>
-                            <select
-                                id="evaluation"
-                                value={evaluationFilter}
-                                onChange={(e) => {
-                                    setEvaluationFilter(e.target.value as EvaluationStatus | 'unattempted' | 'all');
-                                    setPage(1);
-                                }}
-                                className="w-full px-4 py-2 rounded-lg bg-white border border-neutral-300 text-neutral-800 
-                                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value="all">All Statuses</option>
-                                <option value="unattempted">Unattempted</option>
-                                <option value="solved">Solved</option>
-                                <option value="partial">Partial</option>
-                                <option value="failed">Failed</option>
-                            </select>
-                        </div>
-
-                        {/* Results Summary */}
-                        <div className="flex items-end">
-                            <div className="text-sm text-neutral-600">
-                                <span className="font-semibold text-neutral-800">{totalItems}</span> puzzles found
+                            <div className="space-y-2">
+                                {[
+                                    { value: 'unattempted', label: 'Not Started' },
+                                    { value: 'solved', label: 'Completed' },
+                                    { value: 'partial', label: 'In Progress' },
+                                    { value: 'failed', label: 'Failed' }
+                                ].map((status) => (
+                                    <label key={status.value} className="flex items-center cursor-pointer hover:bg-neutral-50 p-2 rounded">
+                                        <input
+                                            type="checkbox"
+                                            checked={evaluationFilters.has(status.value as EvaluationStatus | 'unattempted')}
+                                            onChange={(e) => {
+                                                const newFilters = new Set(evaluationFilters);
+                                                if (e.target.checked) {
+                                                    newFilters.add(status.value as EvaluationStatus | 'unattempted');
+                                                } else {
+                                                    newFilters.delete(status.value as EvaluationStatus | 'unattempted');
+                                                }
+                                                setEvaluationFilters(newFilters);
+                                                setPage(1);
+                                            }}
+                                            className="w-4 h-4 text-blue-600 border-neutral-300 rounded focus:ring-blue-500"
+                                        />
+                                        <span className="ml-2 text-sm text-neutral-700">{status.label}</span>
+                                    </label>
+                                ))}
                             </div>
+                        </div>
+                    </div>
+                    
+                    {/* Results Summary */}
+                    <div className="mt-4 pt-4 border-t border-neutral-200">
+                        <div className="text-sm text-neutral-600">
+                            <span className="font-semibold text-neutral-800">{totalItems}</span> puzzles found
                         </div>
                     </div>
                 </div>
@@ -338,8 +357,8 @@ export default function PuzzleListPage() {
                         <p className="text-neutral-400 text-lg">No puzzles found matching your filters.</p>
                         <button
                             onClick={() => {
-                                setDifficultyFilter('all');
-                                setEvaluationFilter('all');
+                                setDifficultyFilters(new Set(['easy', 'medium', 'hard']));
+                                setEvaluationFilters(new Set(['unattempted', 'solved', 'partial', 'failed']));
                                 setPage(1);
                             }}
                             className="mt-4 text-blue-400 hover:text-blue-300 font-medium"

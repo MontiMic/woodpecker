@@ -18,17 +18,32 @@ router.get('/list', authenticateToken, async (req, res) => {
         const sortBy = req.query.sortBy || 'puzzleId';
         const sortOrder = req.query.sortOrder || 'asc';
         
+        // Parse comma-separated filters
+        const difficultyFilters = difficultyFilter === 'all'
+            ? ['easy', 'medium', 'hard']
+            : difficultyFilter.split(',').map(d => d.trim());
+        const evaluationFilters = evaluationFilter === 'all'
+            ? ['solved', 'partial', 'failed', 'unattempted']
+            : evaluationFilter.split(',').map(e => e.trim());
+        
         // Validate filter parameters
-        const validDifficulties = ['easy', 'medium', 'hard', 'all'];
-        const validEvaluations = ['solved', 'partial', 'failed', 'unattempted', 'all'];
+        const validDifficulties = ['easy', 'medium', 'hard'];
+        const validEvaluations = ['solved', 'partial', 'failed', 'unattempted'];
         const validSortBy = ['puzzleId', 'difficulty', 'evaluation'];
         const validSortOrder = ['asc', 'desc'];
         
-        if (!validDifficulties.includes(difficultyFilter)) {
-            return res.status(400).json({ error: 'Invalid difficulty filter' });
+        // Validate each difficulty filter
+        for (const diff of difficultyFilters) {
+            if (!validDifficulties.includes(diff)) {
+                return res.status(400).json({ error: `Invalid difficulty filter: ${diff}` });
+            }
         }
-        if (!validEvaluations.includes(evaluationFilter)) {
-            return res.status(400).json({ error: 'Invalid evaluation filter' });
+        
+        // Validate each evaluation filter
+        for (const evalFilter of evaluationFilters) {
+            if (!validEvaluations.includes(evalFilter)) {
+                return res.status(400).json({ error: `Invalid evaluation filter: ${evalFilter}` });
+            }
         }
         if (!validSortBy.includes(sortBy)) {
             return res.status(400).json({ error: 'Invalid sortBy parameter' });
@@ -74,21 +89,15 @@ router.get('/list', authenticateToken, async (req, res) => {
         // Apply filters
         let filteredItems = allItems;
         
-        // Filter by difficulty
-        if (difficultyFilter !== 'all') {
-            filteredItems = filteredItems.filter(item => item.difficulty === difficultyFilter);
-        }
+        filteredItems = filteredItems.filter(item => difficultyFilters.includes(item.difficulty));
         
-        // Filter by evaluation
-        if (evaluationFilter !== 'all') {
-            if (evaluationFilter === 'unattempted') {
-                filteredItems = filteredItems.filter(item => item.evaluation === null);
-            } else {
-                filteredItems = filteredItems.filter(item => item.evaluation === evaluationFilter);
+        filteredItems = filteredItems.filter(item => {
+            if (evaluationFilters.includes('unattempted') && item.evaluation === null) {
+                return true;
             }
-        }
+            return item.evaluation && evaluationFilters.includes(item.evaluation);
+        });
         
-        // Apply sorting
         filteredItems.sort((a, b) => {
             let comparison = 0;
             
@@ -107,14 +116,12 @@ router.get('/list', authenticateToken, async (req, res) => {
             return sortOrder === 'asc' ? comparison : -comparison;
         });
         
-        // Calculate pagination
         const totalItems = filteredItems.length;
         const totalPages = Math.ceil(totalItems / pageSize);
         const startIndex = (page - 1) * pageSize;
         const endIndex = startIndex + pageSize;
         const paginatedItems = filteredItems.slice(startIndex, endIndex);
         
-        // Build response
         const response = {
             items: paginatedItems,
             pagination: {
@@ -124,8 +131,8 @@ router.get('/list', authenticateToken, async (req, res) => {
                 totalPages: totalPages
             },
             filters: {
-                difficulty: difficultyFilter === 'all' ? null : difficultyFilter,
-                evaluation: evaluationFilter === 'all' ? null : evaluationFilter
+                difficulty: difficultyFilter === 'all' ? null : difficultyFilters,
+                evaluation: evaluationFilter === 'all' ? null : evaluationFilters
             },
             sorting: {
                 sortBy: sortBy,

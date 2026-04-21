@@ -441,14 +441,17 @@ export default function Board() {
             </button>
           </div>
           
-          <ControlButton onClick={sharePuzzle} title="Create a shared room for this puzzle">
-            Share Puzzle
-          </ControlButton>
           {isLoggedIn && (
-            <ControlButton onClick={() => navigate('/puzzles')} title="Browse all puzzles">
+            <ControlButton onClick={async () => {
+              await savePendingEvaluation();
+              navigate('/puzzles');
+            }} title="Browse all puzzles">
               Browse Puzzles
             </ControlButton>
           )}
+          <ControlButton onClick={sharePuzzle} title="Create a shared room for this puzzle">
+            Share Puzzle
+          </ControlButton>
           <ControlButton onClick={() => setIsFlipped(!isFlipped)} title="Flip the board orientation">
             Flip Board
           </ControlButton>
