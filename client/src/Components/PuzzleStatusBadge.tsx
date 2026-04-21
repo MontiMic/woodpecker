@@ -31,11 +31,11 @@ const PuzzleStatusBadge: React.FC<PuzzleStatusBadgeProps> = ({ status }) => {
       )
     },
     partial: {
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-700',
-      borderColor: 'border-blue-200',
-      iconColor: 'text-blue-500',
-      label: 'In Progress',
+      bgColor: 'bg-yellow-50',
+      textColor: 'text-yellow-700',
+      borderColor: 'border-yellow-200',
+      iconColor: 'text-yellow-500',
+      label: 'Partial',
       icon: (
         <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
