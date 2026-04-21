@@ -1,6 +1,7 @@
 import { Difficulty } from "../constants";
 import { fenToBoardMap, getFallbackBoard } from "./boardUtils";
 import { BoardCell, PieceType } from "../../defs";
+import { PuzzleListResponse, EvaluationStatus } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 console.log('API Base URL:', API_BASE_URL);
@@ -407,28 +408,7 @@ export async function getPuzzleList(params: {
     evaluation?: string;
     sortBy?: string;
     sortOrder?: string;
-} = {}): Promise<{
-    items: Array<{
-        puzzleId: number;
-        description: string;
-        difficulty: string;
-        evaluation: string | null;
-    }>;
-    pagination: {
-        page: number;
-        pageSize: number;
-        totalItems: number;
-        totalPages: number;
-    };
-    filters: {
-        difficulty: string | null;
-        evaluation: string | null;
-    };
-    sorting: {
-        sortBy: string;
-        sortOrder: string;
-    };
-}> {
+} = {}): Promise<PuzzleListResponse> {
     try {
         const token = getToken();
         
@@ -459,7 +439,20 @@ export async function getPuzzleList(params: {
         }
 
         const data = await response.json();
-        return data;
+        
+        // Validate and cast difficulty values to ensure type safety
+        const validatedData: PuzzleListResponse = {
+            ...data,
+            items: data.items.map((item: any) => ({
+                ...item,
+                difficulty: ['easy', 'medium', 'hard'].includes(item.difficulty)
+                    ? item.difficulty as Difficulty
+                    : 'easy' as Difficulty,
+                evaluation: item.evaluation as EvaluationStatus | null
+            }))
+        };
+        
+        return validatedData;
     } catch (error) {
         console.error('Error getting puzzle list:', error);
         throw error;
