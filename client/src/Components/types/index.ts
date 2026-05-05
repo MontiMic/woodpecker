@@ -97,3 +97,46 @@ export interface PuzzleListResponse {
     sortOrder: SortOrder;
   };
 }
+
+// Burnout Mode Types
+export interface BurnoutSession {
+  _id: string;
+  username: string;
+  isActive: boolean;
+  startTime: string;
+  endTime: string;
+  difficulties: Difficulty[];
+  puzzlePool: number[];
+  completedInSession: number[];
+  currentPuzzleIndex: number;
+  stats: {
+    totalAttempts: number;
+    successfulSolves: number;
+    startedAt: string;
+  };
+}
+
+export interface BurnoutSessionResponse {
+  success: boolean;
+  session?: BurnoutSession;
+  error?: string;
+  message?: string;
+}
+
+export interface StartBurnoutSessionParams {
+  durationDays: number;
+  difficulties: Difficulty[];
+}
+
+export interface CompletePuzzleParams {
+  puzzleId: number;
+  evaluation: EvaluationStatus;
+}
+
+export interface UpdateDifficultiesParams {
+  difficulties: Difficulty[];
+}
+
+export interface NavigatePuzzleParams {
+  puzzleIndex: number;
+}

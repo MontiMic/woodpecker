@@ -1,15 +1,17 @@
+import { EvaluationStatus } from "./types";
+
 interface PuzzleEvaluationProps {
     isLoggedIn: boolean;
-    selectedEvaluation: string | null;
-    onEvaluationChange: (evaluation: string | null) => void;
+    selectedEvaluation: EvaluationStatus | null;
+    onEvaluationChange: (evaluation: EvaluationStatus | null) => void;
 }
 
-export default function PuzzleEvaluation({ 
+export default function PuzzleEvaluation({
     isLoggedIn,
     selectedEvaluation,
     onEvaluationChange
 }: PuzzleEvaluationProps) {
-    const handleEvaluationSelect = (selectedValue: string) => {
+    const handleEvaluationSelect = (selectedValue: EvaluationStatus) => {
         onEvaluationChange(selectedValue);
     };
 
@@ -17,7 +19,7 @@ export default function PuzzleEvaluation({
         return null;
     }
 
-    const evaluations = [
+    const evaluations: { value: EvaluationStatus; label: string }[] = [
         { value: 'failed', label: 'Failed' },
         { value: 'partial', label: 'Partial' },
         { value: 'solved', label: 'Solved' }

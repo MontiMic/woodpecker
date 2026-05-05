@@ -128,7 +128,7 @@ export default function PuzzleListPage({ onClose, onSelectPuzzle }: PuzzleListPa
         <div className="min-h-screen bg-black-background">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-8 flex justify-between items-center">
                     <button
                         onClick={() => {
                             onClose?.();
@@ -143,6 +143,18 @@ export default function PuzzleListPage({ onClose, onSelectPuzzle }: PuzzleListPa
                             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
                         </svg>
                         Back to Puzzle
+                    </button>
+                    
+                    <button
+                        onClick={() => navigate('/burnout')}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-red-600
+                                 text-white font-bold rounded-xl transition-all duration-200
+                                 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 active:shadow-md
+                                 border-b-4 border-red-700 hover:border-red-800"
+                        title="Enter Burnout Mode - Solve as many puzzles as you can!"
+                    >
+                        <span className="text-xl">🔥</span>
+                        Burnout Mode
                     </button>
                 </div>
 

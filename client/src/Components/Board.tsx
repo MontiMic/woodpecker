@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { DeskCell, WHITE_SIDE_CELLS, BLACK_SIDE_CELLS, PieceType } from "../defs";
-import { Difficulty } from "./types";
+import { Difficulty, EvaluationStatus } from "./types";
 import DifficultySelector from "./DifficultySelector";
 import PuzzleDescription from "./PuzzleDescription";
 import ControlButton, { LoginButton } from "./ControlButton";
 import { getRandomBoardFromAPI, getPuzzleByIdFromAPI, checkAuth, saveEvaluation, getEvaluation } from "./utils/apiUtils";
 import { SIDE_CELLS_MAP, isSideCell, generateRoomId, getDifficultyFromPuzzleId } from "./utils/boardUtils";
+import { getBurnoutSession, completePuzzle } from "./utils/burnoutApi";
 import LoginPage from "./LoginPage";
 import PuzzleEvaluation from "./PuzzleEvaluation";
 import UserProfile from "./UserProfile";
@@ -269,18 +270,25 @@ export default function Board({ onBrowsePuzzles }: BoardProps) {
     }
   }, [puzzleIndex, isLoggedIn]);
   
-  const handleLoginSuccess = (loggedInUsername: string) => {
+  const handleLoginSuccess = (
+    loggedInUsername: string,
+    options?: { redirectToPuzzleId?: number }
+  ) => {
     setIsLoggedIn(true);
     setUsername(loggedInUsername);
     setShowLoginPage(false);
+
+    if (typeof options?.redirectToPuzzleId === 'number') {
+      navigate(`/?puzzleId=${options.redirectToPuzzleId}`);
+    }
   };
   
-  const handleEvaluationChange = (newEvaluation: string | null) => {
+  const handleEvaluationChange = async (newEvaluation: EvaluationStatus | null) => {
     if (!isLoggedIn) {
       return;
     }
     
-    const finalEvaluation = evaluation === newEvaluation ? null : newEvaluation;
+    const finalEvaluation: EvaluationStatus | null = evaluation === newEvaluation ? null : newEvaluation;
     
     setEvaluation(finalEvaluation);
     
@@ -289,6 +297,24 @@ export default function Board({ onBrowsePuzzles }: BoardProps) {
         puzzleId: puzzleIndex,
         evaluation: finalEvaluation
       });
+      
+      // Track puzzle completion in burnout session for any evaluation
+      if (['solved', 'partial', 'failed'].includes(finalEvaluation)) {
+        try {
+          const sessionResult = await getBurnoutSession();
+          if (sessionResult.success && sessionResult.session) {
+            // There's an active burnout session, track the evaluation/completion
+            const completionResult = await completePuzzle(puzzleIndex, finalEvaluation);
+            if (completionResult.success) {
+              console.log(`Puzzle completion tracked in burnout session with evaluation: ${finalEvaluation}`);
+            } else {
+              console.error('Failed to track puzzle in burnout session:', completionResult.error);
+            }
+          }
+        } catch (error) {
+          console.error('Error checking burnout session:', error);
+        }
+      }
     } else {
       setPendingEvaluation(null);
     }

@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const evaluationsRoutes = require('./routes/evaluations');
 const puzzlesRoutes = require('./routes/puzzles');
+const burnoutRoutes = require('./routes/burnout');
 const healthRoutes = require('./routes/health');
 const authenticateToken = require('./middleware/auth');
 
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/evaluations', evaluationsRoutes);
 app.use('/api/puzzles', puzzlesRoutes);
+app.use('/api/burnout', burnoutRoutes);
 app.use('/api/health', healthRoutes);
 
 app.get('/api/auth/me', authenticateToken, async (req, res) => {

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { loginUser, registerUser } from './utils/apiUtils';
+import { getBurnoutSession } from './utils/burnoutApi';
 
 interface LoginPageProps {
     onBack: () => void;
-    onLoginSuccess: (username: string) => void;
+    onLoginSuccess: (username: string, options?: { redirectToPuzzleId?: number }) => void;
 }
 
 type FormMode = 'login' | 'register';
@@ -67,7 +68,30 @@ export default function LoginPage({ onBack, onLoginSuccess }: LoginPageProps) {
 
             if (result.success && result.username) {
                 console.log('Login successful, token stored');
-                onLoginSuccess(result.username);
+
+                let redirectToPuzzleId: number | undefined;
+
+                try {
+                    const sessionResult = await getBurnoutSession();
+                    const session = sessionResult.success ? sessionResult.session : undefined;
+
+                    if (session?.isActive && session.puzzlePool.length > 0) {
+                        const currentPuzzleId = session.puzzlePool[session.currentPuzzleIndex];
+
+                        if (
+                            Number.isInteger(session.currentPuzzleIndex) &&
+                            session.currentPuzzleIndex >= 0 &&
+                            session.currentPuzzleIndex < session.puzzlePool.length &&
+                            typeof currentPuzzleId === 'number'
+                        ) {
+                            redirectToPuzzleId = currentPuzzleId;
+                        }
+                    }
+                } catch (burnoutError) {
+                    console.error('Burnout session resume check failed:', burnoutError);
+                }
+
+                onLoginSuccess(result.username, { redirectToPuzzleId });
                 onBack();
             } else {
                 setError(result.error || 'Invalid username or password');
