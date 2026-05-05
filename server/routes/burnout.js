@@ -63,9 +63,9 @@ const markExpiredIfNeeded = async (session) => {
 router.post('/start', authenticateToken, async (req, res) => {
     try {
         const username = req.user.username;
-        const { duration, difficulties } = req.body;
+        const { durationDays, difficulties } = req.body;
 
-        if (!VALID_DURATIONS[duration]) {
+        if (!Number.isInteger(durationDays) || !Object.values(VALID_DURATIONS).includes(durationDays)) {
             return res.status(400).json({ error: 'Invalid duration' });
         }
 
@@ -82,7 +82,7 @@ router.post('/start', authenticateToken, async (req, res) => {
 
         const startTime = new Date();
         const endTime = new Date(startTime);
-        endTime.setDate(endTime.getDate() + VALID_DURATIONS[duration]);
+        endTime.setDate(endTime.getDate() + durationDays);
 
         const normalizedDifficulties = normalizeDifficulties(difficulties);
         const puzzlePool = buildPuzzlePool(normalizedDifficulties);
@@ -102,7 +102,7 @@ router.post('/start', authenticateToken, async (req, res) => {
             }
         });
 
-        res.status(201).json(session);
+        res.status(201).json({ session, message: 'Burnout session started successfully' });
 
     } catch (error) {
         console.error('Error starting burnout session:', error);
@@ -119,10 +119,10 @@ router.get('/session', authenticateToken, async (req, res) => {
         const updatedSession = await markExpiredIfNeeded(session);
 
         if (!updatedSession || !updatedSession.isActive) {
-            return res.json(null);
+            return res.status(404).json({ error: 'No active session found' });
         }
 
-        res.json(updatedSession);
+        res.json({ session: updatedSession });
 
     } catch (error) {
         console.error('Error getting burnout session:', error);
@@ -166,7 +166,7 @@ router.patch('/difficulties', authenticateToken, async (req, res) => {
 
         await updatedSession.save();
 
-        res.json(updatedSession);
+        res.json({ session: updatedSession, message: 'Difficulties updated successfully' });
 
     } catch (error) {
         console.error('Error updating burnout difficulties:', error);
@@ -229,7 +229,7 @@ router.post('/complete-puzzle', authenticateToken, async (req, res) => {
 
         await updatedSession.save();
 
-        res.json(updatedSession);
+        res.json({ session: updatedSession, message: 'Puzzle completed successfully' });
 
     } catch (error) {
         console.error('Error completing burnout puzzle:', error);
@@ -261,7 +261,7 @@ router.patch('/navigate', authenticateToken, async (req, res) => {
         updatedSession.currentPuzzleIndex = puzzleIndex;
         await updatedSession.save();
 
-        res.json(updatedSession);
+        res.json({ session: updatedSession, message: 'Navigation updated successfully' });
 
     } catch (error) {
         console.error('Error navigating burnout session:', error);

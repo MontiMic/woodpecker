@@ -228,7 +228,6 @@ export default function UserProfile({ onBack, onLogout, username, onPuzzleClick 
                                          border-b-4 border-red-700 hover:border-red-800"
                                 title="Enter Burnout Mode - Solve as many puzzles as you can!"
                             >
-                                <span className="text-xl">🔥</span>
                                 {hasActiveBurnoutSession ? 'Continue Burnout Mode' : 'Start Burnout Mode'}
                                 {hasActiveBurnoutSession && (
                                     <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-xs">Active</span>
