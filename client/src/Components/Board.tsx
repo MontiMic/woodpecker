@@ -99,7 +99,12 @@ export default function Board({ onBrowsePuzzles }: BoardProps) {
       try {
         const result = await getEvaluation(puzzleIndex);
         if (result.success) {
-          setEvaluation(result.evaluation || null);
+          const evaluation = result.evaluation;
+          // Type guard to ensure the evaluation is a valid EvaluationStatus
+          const validEvaluation = (evaluation === 'solved' || evaluation === 'partial' || evaluation === 'failed')
+            ? evaluation as EvaluationStatus
+            : null;
+          setEvaluation(validEvaluation);
           console.log(`Loaded evaluation for puzzle ${puzzleIndex}: ${result.evaluation}`);
         }
       } catch (error) {
