@@ -45,7 +45,7 @@ export default function Board({ onBrowsePuzzles }: BoardProps) {
   const [puzzleIndex, setPuzzleIndex] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingNewPuzzle, setIsLoadingNewPuzzle] = useState<boolean>(false);
-  const [evaluation, setEvaluation] = useState<string | null>(null);
+  const [evaluation, setEvaluation] = useState<EvaluationStatus | null>(null);
   const [pendingEvaluation, setPendingEvaluation] = useState<{
     puzzleId: number;
     evaluation: string;
