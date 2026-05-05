@@ -213,10 +213,8 @@ export default function BurnoutMode({ onClose }: BurnoutModeProps) {
             return;
         }
 
-        // Close burnout mode and navigate to puzzle
+        // Close burnout mode - the Board component will handle loading the puzzle
         onClose();
-        window.history.replaceState(null, '', `/?puzzleId=${currentPuzzleId}`);
-        window.location.reload(); // Reload to load the puzzle
     };
 
     const handleSessionExpire = () => {

@@ -35,7 +35,7 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
   
   const sharePuzzle = () => {
     const roomId = generateRoomId();
-    navigate(`/room/${roomId}?puzzleId=${puzzleIndex}`);
+    navigate(`/room/${roomId}`);
   };
 
   const [board, setBoard] = useState<BoardState>(new Map([...SIDE_CELLS_MAP]));
@@ -266,20 +266,8 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
     }
   }
   
-  // Check for puzzleId in URL on mount
+  // Load random puzzle on mount
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const puzzleIdParam = urlParams.get('puzzleId');
-    
-    if (puzzleIdParam) {
-      const puzzleId = parseInt(puzzleIdParam, 10);
-      if (!isNaN(puzzleId) && puzzleId > 0) {
-        loadPuzzleById(puzzleId, { syncBurnout: true });
-        return;
-      }
-    }
-    
-    // If no valid puzzleId, load random puzzle
     loadRandomPuzzle();
   }, []);
   
@@ -301,7 +289,8 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
     setShowLoginPage(false);
 
     if (typeof options?.redirectToPuzzleId === 'number') {
-      navigate(`/?puzzleId=${options.redirectToPuzzleId}`);
+      // Load the puzzle directly without URL parameters
+      loadPuzzleById(options.redirectToPuzzleId);
     }
   };
   

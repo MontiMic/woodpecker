@@ -22,7 +22,6 @@ export default function App() {
                 onClose={() => setShowPuzzleList(false)}
                 onSelectPuzzle={(puzzleId) => {
                   setShowPuzzleList(false);
-                  window.history.replaceState(null, '', `/?puzzleId=${puzzleId}`);
                 }}
               />
             ) : (

@@ -91,7 +91,7 @@ export default function PuzzleListPage({ onClose, onSelectPuzzle }: PuzzleListPa
     const handlePuzzleClick = (puzzleId: number) => {
         onSelectPuzzle?.(String(puzzleId));
         if (!onSelectPuzzle) {
-            navigate(`/?puzzleId=${puzzleId}`);
+            navigate('/');
         }
     };
 
