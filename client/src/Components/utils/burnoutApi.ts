@@ -132,7 +132,8 @@ export async function updateDifficulties(
  */
 export async function completePuzzle(
     puzzleId: number,
-    evaluation: 'solved' | 'partial' | 'failed' | boolean
+    evaluation: 'solved' | 'partial' | 'failed' | boolean,
+    nextPuzzleId?: number
 ): Promise<BurnoutSessionResponse> {
     try {
         const normalizedEvaluation = typeof evaluation === 'boolean'
@@ -145,7 +146,7 @@ export async function completePuzzle(
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
             },
-            body: JSON.stringify({ puzzleId, evaluation: normalizedEvaluation }),
+            body: JSON.stringify({ puzzleId, evaluation: normalizedEvaluation, nextPuzzleId }),
         });
 
         const data = await response.json();

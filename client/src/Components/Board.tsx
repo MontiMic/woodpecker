@@ -6,7 +6,7 @@ import PuzzleDescription from "./PuzzleDescription";
 import ControlButton, { LoginButton } from "./ControlButton";
 import { getRandomBoardFromAPI, getPuzzleByIdFromAPI, checkAuth, saveEvaluation, getEvaluation } from "./utils/apiUtils";
 import { SIDE_CELLS_MAP, isSideCell, generateRoomId, getDifficultyFromPuzzleId } from "./utils/boardUtils";
-import { getBurnoutSession, completePuzzle } from "./utils/burnoutApi";
+import { getBurnoutSession, completePuzzle, navigatePuzzle } from "./utils/burnoutApi";
 import LoginPage from "./LoginPage";
 import PuzzleEvaluation from "./PuzzleEvaluation";
 import UserProfile from "./UserProfile";
@@ -48,10 +48,6 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingNewPuzzle, setIsLoadingNewPuzzle] = useState<boolean>(false);
   const [evaluation, setEvaluation] = useState<EvaluationStatus | null>(null);
-  const [pendingEvaluation, setPendingEvaluation] = useState<{
-    puzzleId: number;
-    evaluation: string;
-  } | null>(null);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -80,27 +76,6 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
 
     checkAuthentication();
   }, []);
-
-  // Function to save pending evaluation to server
-  const savePendingEvaluation = async () => {
-    if (pendingEvaluation && isLoggedIn) {
-      try {
-        const result = await saveEvaluation(
-          pendingEvaluation.puzzleId, 
-          pendingEvaluation.evaluation
-        );
-        if (result.success) {
-          console.log(`Evaluation saved for puzzle ${pendingEvaluation.puzzleId}: ${pendingEvaluation.evaluation}`);
-        } else {
-          console.error('Failed to save evaluation:', result.error);
-        }
-      } catch (error) {
-        console.error('Error saving evaluation:', error);
-      } finally {
-        setPendingEvaluation(null);
-      }
-    }
-  };
 
   // Function to load evaluation for current puzzle
   const loadCurrentEvaluation = async () => {
@@ -162,12 +137,45 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
     return newId;
   };
 
-  const loadPuzzleById = async (puzzleId: number) => {
+  const syncBurnoutNavigation = async (targetPuzzleId: number) => {
+    const sessionResult = await getBurnoutSession();
+
+    if (!sessionResult.success || !sessionResult.session) {
+      setIsInBurnoutMode(false);
+      return false;
+    }
+
+    const targetPuzzleIndex = sessionResult.session.puzzlePool.indexOf(targetPuzzleId);
+
+    if (targetPuzzleIndex === -1) {
+      setIsInBurnoutMode(false);
+      return false;
+    }
+
+    setIsInBurnoutMode(true);
+
+    const navigationResult = await navigatePuzzle(targetPuzzleIndex);
+
+    if (!navigationResult.success) {
+      console.error('Failed to sync burnout navigation:', navigationResult.error);
+      return false;
+    }
+
+    return true;
+  };
+
+  const loadPuzzleById = async (puzzleId: number, options?: { syncBurnout?: boolean }) => {
     setError(null);
     setIsLoadingNewPuzzle(true);
     
     try {
-      await savePendingEvaluation();
+      if (options?.syncBurnout) {
+        const burnoutNavigationSynced = await syncBurnoutNavigation(puzzleId);
+
+        if (!burnoutNavigationSynced) {
+          return;
+        }
+      }
       
       const newPuzzleData = await getPuzzleByIdFromAPI(puzzleId);
       setPuzzleData(newPuzzleData);
@@ -189,12 +197,12 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
 
   const loadPreviousPuzzle = () => {
     const newId = getAdjacentPuzzleId('prev');
-    loadPuzzleById(newId);
+    loadPuzzleById(newId, { syncBurnout: true });
   };
 
   const loadNextPuzzle = () => {
     const newId = getAdjacentPuzzleId('next');
-    loadPuzzleById(newId);
+    loadPuzzleById(newId, { syncBurnout: true });
   };
 
   const loadRandomPuzzle = async () => {
@@ -202,8 +210,6 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
     setIsLoadingNewPuzzle(true);
     
     try {
-      await savePendingEvaluation();
-      
       const newPuzzleData = await getRandomBoardFromAPI(difficulty);
       setPuzzleData(newPuzzleData);
       setDescription(newPuzzleData.description);
@@ -214,6 +220,11 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
       setSelectedCell(null);
       setIsSolutionRevealed(false);
       setPuzzleIndex(newPuzzleData.index);
+      const burnoutNavigationSynced = await syncBurnoutNavigation(newPuzzleData.index);
+
+      if (!burnoutNavigationSynced) {
+        return;
+      }
     } catch (error) {
       setError('Failed to load puzzle. Please try again.');
       console.error('Error loading puzzle:', error);
@@ -228,8 +239,6 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
     setShowProfilePage(false);
     
     try {
-      await savePendingEvaluation();
-      
       const newPuzzleData = await getPuzzleByIdFromAPI(puzzleId);
       setPuzzleData(newPuzzleData);
       setDescription(newPuzzleData.description);
@@ -250,13 +259,11 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
   }
 
   function restartPuzzle() {
-    savePendingEvaluation().then(() => {
-      if (puzzleData) {
-        setBoard(new Map([...puzzleData.boardFromFen, ...SIDE_CELLS_MAP]));
-        setSelectedCell(null);
-        setIsSolutionRevealed(false);
-      }
-    });
+    if (puzzleData) {
+      setBoard(new Map([...puzzleData.boardFromFen, ...SIDE_CELLS_MAP]));
+      setSelectedCell(null);
+      setIsSolutionRevealed(false);
+    }
   }
   
   // Check for puzzleId in URL on mount
@@ -267,7 +274,7 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
     if (puzzleIdParam) {
       const puzzleId = parseInt(puzzleIdParam, 10);
       if (!isNaN(puzzleId) && puzzleId > 0) {
-        loadPuzzleById(puzzleId);
+        loadPuzzleById(puzzleId, { syncBurnout: true });
         return;
       }
     }
@@ -308,10 +315,17 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
     setEvaluation(finalEvaluation);
     
     if (finalEvaluation) {
-      setPendingEvaluation({
-        puzzleId: puzzleIndex,
-        evaluation: finalEvaluation
-      });
+      // Save evaluation immediately to the server
+      try {
+        const result = await saveEvaluation(puzzleIndex, finalEvaluation);
+        if (result.success) {
+          console.log(`Evaluation saved immediately for puzzle ${puzzleIndex}: ${finalEvaluation}`);
+        } else {
+          console.error('Failed to save evaluation:', result.error);
+        }
+      } catch (error) {
+        console.error('Error saving evaluation:', error);
+      }
       
       // Track puzzle completion in burnout session for any evaluation
       if (['solved', 'partial', 'failed'].includes(finalEvaluation)) {
@@ -320,7 +334,10 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
           if (sessionResult.success && sessionResult.session) {
             // There's an active burnout session, track the evaluation/completion
             setIsInBurnoutMode(true);
-            const completionResult = await completePuzzle(puzzleIndex, finalEvaluation);
+            const nextPuzzleId = sessionResult.session.puzzlePool.length > 1
+              ? getAdjacentPuzzleId('next')
+              : undefined;
+            const completionResult = await completePuzzle(puzzleIndex, finalEvaluation, nextPuzzleId);
             if (completionResult.success) {
               console.log(`Puzzle completion tracked in burnout session with evaluation: ${finalEvaluation}`);
             } else {
@@ -334,7 +351,14 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
         }
       }
     } else {
-      setPendingEvaluation(null);
+      // If deselecting (setting to null), save that too
+      try {
+        // We need to delete the evaluation - but the API doesn't support deletion
+        // So we'll just skip saving null values
+        console.log(`Evaluation deselected for puzzle ${puzzleIndex}`);
+      } catch (error) {
+        console.error('Error handling evaluation deselection:', error);
+      }
     }
   };
 
@@ -490,16 +514,10 @@ export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
           
           {isLoggedIn && (
             <>
-              <ControlButton onClick={async () => {
-                await savePendingEvaluation();
-                onBrowsePuzzles?.();
-              }} title="Browse all puzzles">
+              <ControlButton onClick={() => onBrowsePuzzles?.()} title="Browse all puzzles">
                 Browse Puzzles
               </ControlButton>
-              <ControlButton onClick={async () => {
-                await savePendingEvaluation();
-                onBurnoutMode?.();
-              }} title="Start or continue a burnout session">
+              <ControlButton onClick={() => onBurnoutMode?.()} title="Start or continue a burnout session">
                 Burnout Mode
               </ControlButton>
             </>

@@ -178,7 +178,7 @@ router.patch('/difficulties', authenticateToken, async (req, res) => {
 router.post('/complete-puzzle', authenticateToken, async (req, res) => {
     try {
         const username = req.user.username;
-        const { puzzleId, evaluation, success } = req.body;
+        const { puzzleId, evaluation, success, nextPuzzleId } = req.body;
 
         if (!Number.isInteger(puzzleId) || puzzleId < 1 || puzzleId > 1128) {
             return res.status(400).json({ error: 'Invalid puzzleId' });
@@ -192,6 +192,10 @@ router.post('/complete-puzzle', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Invalid evaluation value' });
         }
 
+        if (nextPuzzleId !== undefined && (!Number.isInteger(nextPuzzleId) || nextPuzzleId < 1 || nextPuzzleId > 1128)) {
+            return res.status(400).json({ error: 'Invalid nextPuzzleId' });
+        }
+
         const session = await BurnoutSession.findOne({ username, isActive: true });
         const updatedSession = await markExpiredIfNeeded(session);
 
@@ -199,7 +203,8 @@ router.post('/complete-puzzle', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Active burnout session not found' });
         }
 
-        const isInPuzzlePool = updatedSession.puzzlePool.includes(puzzleId);
+        const currentPuzzlePosition = updatedSession.puzzlePool.indexOf(puzzleId);
+        const isInPuzzlePool = currentPuzzlePosition !== -1;
         const alreadyCompleted = updatedSession.completedInSession.includes(puzzleId);
 
         if (!isInPuzzlePool && !alreadyCompleted) {
@@ -216,15 +221,26 @@ router.post('/complete-puzzle', authenticateToken, async (req, res) => {
             }
         }
 
-        const allPuzzlesCompleted = updatedSession.puzzlePool.every(
-            (id) => updatedSession.completedInSession.includes(id)
-        );
-
-        if (updatedSession.puzzlePool.length === 0 || allPuzzlesCompleted) {
+        if (updatedSession.puzzlePool.length === 0) {
             updatedSession.currentPuzzleIndex = 0;
             updatedSession.isActive = false;
-        } else if (updatedSession.currentPuzzleIndex >= updatedSession.puzzlePool.length) {
-            updatedSession.currentPuzzleIndex = updatedSession.puzzlePool.length - 1;
+        } else if (Number.isInteger(nextPuzzleId)) {
+            const nextPuzzleIndex = updatedSession.puzzlePool.indexOf(nextPuzzleId);
+
+            if (nextPuzzleIndex === -1) {
+                return res.status(400).json({ error: 'nextPuzzleId is not part of the current burnout session' });
+            }
+
+            updatedSession.currentPuzzleIndex = nextPuzzleIndex;
+        } else {
+            const fallbackIndex = isInPuzzlePool
+                ? Math.min(currentPuzzlePosition, updatedSession.puzzlePool.length - 1)
+                : updatedSession.currentPuzzleIndex;
+
+            updatedSession.currentPuzzleIndex = Math.max(
+                0,
+                Math.min(fallbackIndex, updatedSession.puzzlePool.length - 1)
+            );
         }
 
         await updatedSession.save();

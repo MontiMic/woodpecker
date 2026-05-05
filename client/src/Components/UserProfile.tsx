@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { logoutUser, getRecentEvaluations, getUserStats } from './utils/apiUtils';
-import { getBurnoutSession } from './utils/burnoutApi';
 
 interface UserProfileProps {
     onBack: () => void;
@@ -36,12 +34,10 @@ interface UserStats {
 }
 
 export default function UserProfile({ onBack, onLogout, username, onPuzzleClick }: UserProfileProps) {
-    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [loadingRecent, setLoadingRecent] = useState(true);
     const [loadingStats, setLoadingStats] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [hasActiveBurnoutSession, setHasActiveBurnoutSession] = useState(false);
     const [recentEvaluations, setRecentEvaluations] = useState<RecentEvaluation[]>([]);
     const [stats, setStats] = useState<UserStats>({
         totalPuzzles: 0,
@@ -59,12 +55,6 @@ export default function UserProfile({ onBack, onLogout, username, onPuzzleClick 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                // Check for active burnout session
-                const sessionResult = await getBurnoutSession();
-                if (sessionResult.success && sessionResult.session) {
-                    setHasActiveBurnoutSession(true);
-                }
-
                 // Fetch recent evaluations (last 3)
                 setLoadingRecent(true);
                 const recentResult = await getRecentEvaluations(3);
@@ -217,23 +207,6 @@ export default function UserProfile({ onBack, onLogout, username, onPuzzleClick 
                     <div className="text-center mb-8">
                         <h1 className="text-4xl font-bold text-neutral-800">{username}</h1>
                         <p className="text-neutral-600 mt-2">Chess Puzzle Enthusiast</p>
-                        
-                        {/* Burnout Mode Button */}
-                        <div className="mt-6">
-                            <button
-                                onClick={() => navigate('/burnout')}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600
-                                         text-white font-bold rounded-xl transition-all duration-200
-                                         shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 active:shadow-md
-                                         border-b-4 border-red-700 hover:border-red-800"
-                                title="Enter Burnout Mode - Solve as many puzzles as you can!"
-                            >
-                                {hasActiveBurnoutSession ? 'Continue Burnout Mode' : 'Start Burnout Mode'}
-                                {hasActiveBurnoutSession && (
-                                    <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-xs">Active</span>
-                                )}
-                            </button>
-                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
