@@ -7,6 +7,7 @@ import BurnoutMode from "./BurnoutMode";
 
 export default function App() {
   const [showPuzzleList, setShowPuzzleList] = useState(false);
+  const [showBurnoutMode, setShowBurnoutMode] = useState(false);
 
   return (
     <BrowserRouter>
@@ -14,7 +15,9 @@ export default function App() {
         <Route
           path="/"
           element={
-            showPuzzleList ? (
+            showBurnoutMode ? (
+              <BurnoutMode onClose={() => setShowBurnoutMode(false)} />
+            ) : showPuzzleList ? (
               <PuzzleListPage
                 onClose={() => setShowPuzzleList(false)}
                 onSelectPuzzle={(puzzleId) => {
@@ -23,12 +26,14 @@ export default function App() {
                 }}
               />
             ) : (
-              <Board onBrowsePuzzles={() => setShowPuzzleList(true)} />
+              <Board
+                onBrowsePuzzles={() => setShowPuzzleList(true)}
+                onBurnoutMode={() => setShowBurnoutMode(true)}
+              />
             )
           }
         />
         <Route path="/puzzles" element={<PuzzleListPage />} />
-        <Route path="/burnout" element={<BurnoutMode />} />
         <Route path="/room/:roomId" element={<SharedRoom />} />
       </Routes>
     </BrowserRouter>

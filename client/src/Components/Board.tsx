@@ -18,9 +18,10 @@ import { DIFFICULTY_RANGES } from "./constants";
 
 interface BoardProps {
   onBrowsePuzzles?: () => void;
+  onBurnoutMode?: () => void;
 }
 
-export default function Board({ onBrowsePuzzles }: BoardProps) {
+export default function Board({ onBrowsePuzzles, onBurnoutMode }: BoardProps) {
   const navigate = useNavigate();
   const [showLoginPage, setShowLoginPage] = useState<boolean>(false);
   const [showProfilePage, setShowProfilePage] = useState<boolean>(false);
@@ -30,6 +31,7 @@ export default function Board({ onBrowsePuzzles }: BoardProps) {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [puzzleData, setPuzzleData] = useState<PuzzleData | null>(null);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
+  const [isInBurnoutMode, setIsInBurnoutMode] = useState<boolean>(false);
   
   const sharePuzzle = () => {
     const roomId = generateRoomId();
@@ -61,6 +63,13 @@ export default function Board({ onBrowsePuzzles }: BoardProps) {
           setIsLoggedIn(true);
           setUsername(authStatus.username || '');
           console.log('User authenticated:', authStatus.username);
+          
+          // Check if user has an active burnout session
+          const sessionResult = await getBurnoutSession();
+          if (sessionResult.success && sessionResult.session) {
+            setIsInBurnoutMode(true);
+            console.log('Active burnout session detected');
+          }
         }
       } catch (error) {
         console.error('Auth check error:', error);
@@ -268,12 +277,13 @@ export default function Board({ onBrowsePuzzles }: BoardProps) {
   }, []);
   
   useEffect(() => {
-    if (isLoggedIn && puzzleIndex > 0) {
+    // Don't load evaluations when in burnout mode
+    if (isLoggedIn && puzzleIndex > 0 && !isInBurnoutMode) {
       loadCurrentEvaluation();
     } else {
       setEvaluation(null);
     }
-  }, [puzzleIndex, isLoggedIn]);
+  }, [puzzleIndex, isLoggedIn, isInBurnoutMode]);
   
   const handleLoginSuccess = (
     loggedInUsername: string,
@@ -309,12 +319,15 @@ export default function Board({ onBrowsePuzzles }: BoardProps) {
           const sessionResult = await getBurnoutSession();
           if (sessionResult.success && sessionResult.session) {
             // There's an active burnout session, track the evaluation/completion
+            setIsInBurnoutMode(true);
             const completionResult = await completePuzzle(puzzleIndex, finalEvaluation);
             if (completionResult.success) {
               console.log(`Puzzle completion tracked in burnout session with evaluation: ${finalEvaluation}`);
             } else {
               console.error('Failed to track puzzle in burnout session:', completionResult.error);
             }
+          } else {
+            setIsInBurnoutMode(false);
           }
         } catch (error) {
           console.error('Error checking burnout session:', error);
@@ -476,12 +489,20 @@ export default function Board({ onBrowsePuzzles }: BoardProps) {
           </div>
           
           {isLoggedIn && (
-            <ControlButton onClick={async () => {
-              await savePendingEvaluation();
-              onBrowsePuzzles?.();
-            }} title="Browse all puzzles">
-              Browse Puzzles
-            </ControlButton>
+            <>
+              <ControlButton onClick={async () => {
+                await savePendingEvaluation();
+                onBrowsePuzzles?.();
+              }} title="Browse all puzzles">
+                Browse Puzzles
+              </ControlButton>
+              <ControlButton onClick={async () => {
+                await savePendingEvaluation();
+                onBurnoutMode?.();
+              }} title="Start or continue a burnout session">
+                Burnout Mode
+              </ControlButton>
+            </>
           )}
           <ControlButton onClick={sharePuzzle} title="Create a shared room for this puzzle">
             Share Puzzle
