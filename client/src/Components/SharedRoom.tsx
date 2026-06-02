@@ -3,12 +3,13 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { DeskCell, PieceType, WHITE_SIDE_CELLS, BLACK_SIDE_CELLS } from "../defs";
 import { getPuzzleByIdFromAPI } from "./utils/apiUtils";
 import { SIDE_CELLS_MAP, isSideCell, getDifficultyFromPuzzleId } from "./utils/boardUtils";
-import { io, Socket } from "socket.io-client";
 import PuzzleDescription from "./PuzzleDescription";
 import ChessBoard from "./ChessBoard";
 import SolutionBox from "./SolutionBox";
 import BackButton from "./BackButton";
 import { PuzzleData, BoardState } from "./types";
+import { SignalingClient } from "./p2p/SignalingClient";
+import { PeerConnectionManager } from "./p2p/PeerConnectionManager";
 
 export default function SharedRoom() {
     const { roomId } = useParams<{ roomId: string }>();
@@ -16,7 +17,7 @@ export default function SharedRoom() {
     const puzzleId = parseInt(searchParams.get('puzzleId') || '1');
     const navigate = useNavigate();
     
-    const [socket, setSocket] = useState<Socket | null>(null);
+    // Board state (local only for this step)
     const [board, setBoard] = useState<BoardState>(new Map([...SIDE_CELLS_MAP]));
     const [selectedCell, setSelectedCell] = useState<DeskCell | null>(null);
     const [description, setDescription] = useState<string>('');
@@ -27,12 +28,20 @@ export default function SharedRoom() {
     const [direction, setDirection] = useState<string>('w');
     const [puzzleData, setPuzzleData] = useState<PuzzleData | null>(null);
     
+    // P2P state
+    const [p2pReady, setP2pReady] = useState(false);
+    const [peerManager, setPeerManager] = useState<PeerConnectionManager | null>(null);
+    
+    // Refs to persist connections across React StrictMode remounts
+    const signalingRef = useRef<SignalingClient | null>(null);
+    const peerManagerRef = useRef<PeerConnectionManager | null>(null);
     const puzzleDataRef = useRef<PuzzleData | null>(null);
     
     useEffect(() => {
         puzzleDataRef.current = puzzleData;
     }, [puzzleData]);
 
+    // Load puzzle from API
     useEffect(() => {
         const loadPuzzle = async () => {
             try {
@@ -50,199 +59,124 @@ export default function SharedRoom() {
                 setIsLoading(false);
             }
         };
-        
         loadPuzzle();
     }, [puzzleId]);
 
-    // Socket.IO connection
+    // P2P connection setup – signaling server assigns initiator/responder roles
     useEffect(() => {
-        if (!roomId || !puzzleId) return;
-        
-        const newSocket = io('http://localhost:3001', {
-            transports: ['websocket', 'polling']
-        });
-        
-        setSocket(newSocket);
-        
-        // Socket event handlers
-        newSocket.on('connect', () => {
-            console.log('Connected to Socket.IO server');
-            newSocket.emit('join-room', roomId, puzzleId);
-        });
-        
-        newSocket.on('room-joined', (data) => {
-            console.log('Joined room:', data);
-        });
-        
-        newSocket.on('piece-moved', (moveData) => {
-            console.log('Received move:', moveData);
-            applyRemoteMove(moveData);
-        });
-        
-        newSocket.on('side-piece-moved', (moveData) => {
-            console.log('Received side piece move:', moveData);
-            applySidePieceMove(moveData);
-        });
-        
-        newSocket.on('board-reset', () => {
-            console.log('Received board reset signal');
-            const currentPuzzleData = puzzleDataRef.current;
-            if (currentPuzzleData) {
-                const newBoard = new Map([...currentPuzzleData.boardFromFen, ...SIDE_CELLS_MAP]);
-                console.log('New board created with pieces:', newBoard.size);
-                setBoard(newBoard);
-                setSelectedCell(null);
-            } else {
-                console.error('No puzzle data available to reset');
+        if (!roomId || !puzzleDataRef.current) return;
+        // Avoid reconnecting if already connected
+        if (signalingRef.current) {
+            console.log('P2P already initialized, skipping');
+            return;
+        }
+
+        let isMounted = true;
+        let signaling: SignalingClient | null = null;
+
+        const setupP2P = async () => {
+            try {
+                signaling = new SignalingClient();
+                signalingRef.current = signaling;
+                await signaling.connect('ws://localhost:3002', roomId!);
+
+                // Server will immediately send a 'role' message after join
+                signaling.onRole(async (isInitiator) => {
+                    if (!isMounted) return;
+                    console.log(`🎭 Received role: ${isInitiator ? 'INITIATOR' : 'RESPONDER'}`);
+                    
+                    const manager = new PeerConnectionManager(signaling!);
+                    peerManagerRef.current = manager;
+                    await manager.init(isInitiator);
+                    manager.onMessage((msg) => {
+                        console.log('📨 P2P test message received:', msg);
+                        // TODO step 2: handle board synchronization
+                    });
+                    if (isMounted) {
+                        setPeerManager(manager);
+                        setP2pReady(true);
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to connect signaling server:', err);
             }
-        });
-        
-        newSocket.on('disconnect', () => {
-            console.log('Disconnected from Socket.IO server');
-        });
-        
-        // Cleanup on unmount
-        return () => {
-            newSocket.disconnect();
         };
-    }, [roomId, puzzleId]);
 
-    const applyRemoteMove = (moveData: any) => {
-        console.log('Applying remote move:', moveData);
-        
-        const { from, to, piece, isSideCellMove } = moveData;
-        
-        setBoard(prevBoard => {
-            const newBoard = new Map(prevBoard);
-            
-            if (isSideCellMove) {
-                if (isSideCell(to as DeskCell, WHITE_SIDE_CELLS, BLACK_SIDE_CELLS)) {
-                    newBoard.delete(from as DeskCell);
-                } else {
-                    newBoard.set(to as DeskCell, new PieceType(piece.type, piece.color));
-                }
-            } else {
-                newBoard.delete(from as DeskCell);
-                newBoard.set(to as DeskCell, new PieceType(piece.type, piece.color));
-            }
-            
-            return newBoard;
-        });
-        
-        setSelectedCell(null);
+        setupP2P();
+
+        return () => {
+            isMounted = false;
+            // Do NOT close connections here – keep them alive across StrictMode remounts
+            // The cleanup will happen when the component actually unmounts (e.g., navigating away)
+            // For now we rely on the refs to prevent reinitialization.
+        };
+    }, [roomId, puzzleDataRef.current]);
+
+    // Send a test message via P2P
+    const sendTestMessage = () => {
+        if (peerManager && p2pReady) {
+            const testMsg = JSON.stringify({
+                type: 'test',
+                data: `ping from ${Date.now()}`
+            });
+            peerManager.sendMessage(testMsg);
+            console.log('📤 Sent test message');
+        } else {
+            console.warn('P2P not ready');
+        }
     };
 
-    const applySidePieceMove = (moveData: any) => {
-        const { from, to, piece } = moveData;
-        
-        setBoard(prevBoard => {
-            const newBoard = new Map(prevBoard);
-            newBoard.delete(from as DeskCell);
-            newBoard.set(to as DeskCell, new PieceType(piece.type, piece.color));
-            return newBoard;
-        });
-    };
-
+    // Local board move handling (no sync yet)
     const onSelectedCell = (cell: DeskCell) => {
         if (selectedCell == cell) {
             setSelectedCell(null);
-        } else if (selectedCell) {
+            return;
+        }
+        
+        if (selectedCell) {
             const piece = board.get(selectedCell);
-            if (!piece) return;
+            if (!piece) {
+                setSelectedCell(null);
+                return;
+            }
             
             const destPiece = board.get(cell);
             const isDestSideCell = isSideCell(cell, WHITE_SIDE_CELLS, BLACK_SIDE_CELLS);
             const isSourceSideCell = isSideCell(selectedCell, WHITE_SIDE_CELLS, BLACK_SIDE_CELLS);
             
             const newBoard = new Map(board);
+            newBoard.delete(selectedCell);
             
-            if (isSourceSideCell && isDestSideCell) {
+            if (!isDestSideCell) newBoard.set(cell, piece);
+            if (isSourceSideCell) newBoard.set(selectedCell, new PieceType(piece.type, piece.color));
+            
+            if ((isSourceSideCell && isDestSideCell) || (!isDestSideCell && destPiece && destPiece.color === piece.color)) {
                 setSelectedCell(cell);
                 return;
             }
             
-            if (isSourceSideCell) {
-                newBoard.set(cell, piece);
-                setBoard(newBoard);
-                setSelectedCell(null);
-                
-                if (socket && socket.connected && roomId) {
-                    socket.emit('move-piece', roomId, {
-                        from: selectedCell,
-                        to: cell,
-                        piece: {
-                            type: piece.type,
-                            color: piece.color
-                        },
-                        isSideCellMove: true,
-                        moveType: 'from-side'
-                    });
-                }
-            } else if (isDestSideCell) {
-                newBoard.delete(selectedCell);
-                setBoard(newBoard);
-                setSelectedCell(null);
-                
-                if (socket && socket.connected && roomId) {
-                    socket.emit('move-piece', roomId, {
-                        from: selectedCell,
-                        to: cell,
-                        piece: {
-                            type: piece.type,
-                            color: piece.color
-                        },
-                        isSideCellMove: true,
-                        moveType: 'to-side'
-                    });
-                }
-            } else {
-                newBoard.delete(selectedCell);
-                newBoard.set(cell, piece);
-                setBoard(newBoard);
-                setSelectedCell(null);
-                
-                if (socket && socket.connected && roomId) {
-                    socket.emit('move-piece', roomId, {
-                        from: selectedCell,
-                        to: cell,
-                        piece: {
-                            type: piece.type,
-                            color: piece.color
-                        },
-                        isSideCellMove: false
-                    });
-                }
-            }
+            setBoard(newBoard);
+            setSelectedCell(null);
         } else if (board.has(cell)) {
             setSelectedCell(cell);
         }
     };
 
+    // Reset puzzle locally (no broadcast yet)
+    const resetPuzzle = () => {
+        const currentPuzzleData = puzzleDataRef.current;
+        if (!currentPuzzleData) return;
+        
+        const newBoard = new Map([...currentPuzzleData.boardFromFen, ...SIDE_CELLS_MAP]);
+        setBoard(newBoard);
+        setSelectedCell(null);
+        // TODO step 2: broadcast reset via P2P
+    };
+
     const handleShareRoom = () => {
         if (navigator.clipboard) {
             navigator.clipboard.writeText(window.location.href);
-        }
-    };
-
-    const resetPuzzle = () => {
-        console.log('Reset puzzle clicked');
-        
-        const currentPuzzleData = puzzleDataRef.current;
-        if (!currentPuzzleData) {
-            console.error('Cannot reset: no puzzle data');
-            return;
-        }
-        
-        const newBoard = new Map([...currentPuzzleData.boardFromFen, ...SIDE_CELLS_MAP]);
-        console.log('New board created with pieces:', newBoard.size);
-        setBoard(newBoard);
-        setSelectedCell(null);
-        
-        if (socket && socket.connected && roomId) {
-            console.log('Emitting reset-board event to room:', roomId);
-            socket.emit('reset-board', roomId);
-        } else {
-            console.error('Cannot reset: socket not connected');
+            alert('Room URL copied to clipboard');
         }
     };
 
@@ -287,15 +221,30 @@ export default function SharedRoom() {
                                shadow-2xl border-2 border-white/10 relative"
                     style={{ backgroundColor: 'var(--white-cell-color)' }}
                 >
-                    {/* Connection Status with Dot */}
+                    {/* Connection Status */}
                     <div className="flex items-center justify-center gap-2 mb-4">
-                        <div className={`w-3 h-3 rounded-full ${socket?.connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                        <div className={`w-3 h-3 rounded-full ${p2pReady ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
                         <span className="text-neutral-700">
-                            {socket?.connected ? 'Connected' : 'Connecting...'}
+                            {p2pReady ? 'P2P Connected' : 'Connecting P2P...'}
                         </span>
                     </div>
 
-                    {/* Reset Button */}
+                    {/* Test Message Button (Step 1) */}
+                    <button 
+                        onClick={sendTestMessage}
+                        disabled={!p2pReady}
+                        className="px-6 py-3 text-black font-bold rounded-xl transition-all duration-200 
+                                  shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 active:shadow-md
+                                  border-b-4 border-gray-700 hover:border-gray-800 w-full
+                                  hover:brightness-110 active:brightness-95 relative z-10
+                                  disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: 'var(--black-cell-color)' }}
+                        title="Send a test message via P2P"
+                    >
+                        Send Test Message
+                    </button>
+
+                    {/* Reset Button (local only for now) */}
                     <button 
                         onClick={resetPuzzle}
                         className="px-6 py-3 text-black font-bold rounded-xl transition-all duration-200 
@@ -303,12 +252,12 @@ export default function SharedRoom() {
                                   border-b-4 border-gray-700 hover:border-gray-800 w-full
                                   hover:brightness-110 active:brightness-95 relative z-10"
                         style={{ backgroundColor: 'var(--black-cell-color)' }}
-                        title="Reset puzzle to starting position for all users"
+                        title="Reset puzzle locally (not synced yet)"
                     >
-                        Reset Puzzle
+                        Reset Puzzle (Local)
                     </button>
 
-                    {/* Share Room Button */}
+                    {/* Share Room Button (copies URL) */}
                     <button 
                         onClick={handleShareRoom}
                         className="px-6 py-3 text-black font-bold rounded-xl transition-all duration-200 
